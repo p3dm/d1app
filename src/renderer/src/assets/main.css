@@ -162,6 +162,7 @@ main {
   font-size: 14px;
   line-height: 14px;
   opacity: 0.8;
+
   &:last-child {
     border: none;
   }
@@ -180,6 +181,7 @@ main {
 }
 
 @media (max-width: 350px) {
+
   .tip,
   .actions {
     display: none;
@@ -266,11 +268,11 @@ main {
   min-width: 0;
 }
 
-.register-form > .form-group {
+.register-form>.form-group {
   margin: 0;
 }
 
-.register-form > .btn {
+.register-form>.btn {
   width: 100%;
   min-height: 48px;
   margin-top: 4px;
@@ -415,4 +417,629 @@ main {
   .register-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ======================================================================
+   CYBERNETIC OPS — Custom Backgrounds & Design System
+   Derived from readme.md (Tactical Cybernetics + Refined Dark Glassmorphism)
+   ====================================================================== */
+
+/* ── Design-System Custom Properties ── */
+:root {
+  /* Core palette */
+  --co-primary: #00e599;
+  --co-primary-bright: #00ffaa;
+  --co-primary-dim: #6dffba;
+  --co-tertiary: #0a3826;
+
+  /* Surfaces */
+  --co-base: #070908;
+  --co-surface-elevated: #0d110e;
+  --co-surface-card: #131915;
+  --co-surface-card-hover: #17221b;
+
+  /* Text */
+  --co-text-primary: #f2f5f3;
+  --co-text-secondary: #8c9b91;
+  --co-text-muted: #4d5b52;
+
+  /* Borders */
+  --co-border-subtle: rgba(0, 229, 153, 0.12);
+  --co-border-active: rgba(0, 229, 153, 0.35);
+  --co-border-bright: #00e599;
+
+  /* Glows */
+  --co-glow-pulse: rgba(0, 229, 153, 0.45);
+  --co-glow-ambient: rgba(0, 229, 153, 0.08);
+
+  /* Typography families */
+  --co-font-display: 'Space Grotesk', sans-serif;
+  --co-font-body: 'Geist', 'Inter', sans-serif;
+  --co-font-mono: 'JetBrains Mono', monospace;
+
+  /* Spacing */
+  --co-gutter: 1.5rem;
+  --co-gutter-sm: 1rem;
+  --co-margin: 2rem;
+  --co-margin-mobile: 1rem;
+  --co-space-xs: 0.25rem;
+  --co-space-sm: 0.5rem;
+  --co-space-md: 1rem;
+  --co-space-lg: 1.5rem;
+  --co-space-xl: 2.5rem;
+  --co-space-2xl: 4rem;
+  --co-space-3xl: 6rem;
+
+  /* Rounded */
+  --co-rounded-sm: 0.125rem;
+  --co-rounded: 0.25rem;
+  --co-rounded-md: 0.375rem;
+  --co-rounded-lg: 0.5rem;
+  --co-rounded-xl: 0.75rem;
+  --co-rounded-full: 9999px;
+}
+
+/* ── 1. Elevation Level 0 — Base Canvas ──
+   Pitch-black canvas + 24px dot-matrix grid pattern */
+.co-canvas {
+  background-color: var(--co-base);
+  background-image: radial-gradient(var(--co-glow-ambient) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* ── 2. Elevation Level 1 — Panels & Toolbars ──
+   Glassmorphic panel with backdrop blur + subtle green border */
+.co-panel {
+  background-color: var(--co-surface-elevated);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--co-border-subtle);
+}
+
+/* ── 3. Elevation Level 2 — Cards & Modules ──
+   Directional hairline gradient border (bright top → dim bottom) */
+.co-card {
+  background-color: var(--co-surface-card);
+  border: 1px solid transparent;
+  border-image: linear-gradient(180deg,
+      rgba(0, 229, 153, 0.25) 0%,
+      rgba(0, 229, 153, 0.05) 100%) 1;
+  transition: border-image 0.3s ease, box-shadow 0.3s ease;
+}
+
+.co-card:hover {
+  border-image: linear-gradient(180deg,
+      var(--co-glow-pulse) 0%,
+      rgba(0, 229, 153, 0.12) 100%) 1;
+}
+
+/* ── 4. Elevation Level 3 — Active Focus / Modals ──
+   Hover surface + active neon glow ring */
+.co-modal {
+  background-color: var(--co-surface-card-hover);
+  box-shadow: 0 0 24px -4px rgba(0, 229, 153, 0.25);
+}
+
+/* ── 5. Atmospheric — Radial Spotlight ──
+   Soft ambient gradient behind hero sections */
+.co-spotlight {
+  position: relative;
+}
+
+.co-spotlight::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 30%, rgba(0, 229, 153, 0.18) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── 6. Atmospheric — Telemetry Pulse ──
+   Glowing circular nodes with ping animation */
+.co-pulse {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--co-primary);
+  box-shadow: 0 0 8px var(--co-primary);
+  animation: coPulse 2s ease-in-out infinite;
+}
+
+@keyframes coPulse {
+
+  0%,
+  100% {
+    opacity: 0.4;
+    box-shadow: 0 0 6px var(--co-primary);
+  }
+
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 14px var(--co-primary);
+  }
+}
+
+/* ── 7. Button — Primary Action ──
+   Solid neon background, dark monospace text, glow on hover */
+.co-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--co-primary);
+  color: var(--co-base);
+  font-family: var(--co-font-mono);
+  font-weight: 700;
+  font-size: 0.875rem;
+  border: none;
+  border-radius: var(--co-rounded);
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.co-btn-primary:hover {
+  background: var(--co-primary-bright);
+  box-shadow: 0 0 16px rgba(0, 229, 153, 0.4);
+}
+
+/* ── 8. Button — Secondary Ghost ──
+   Surface background, green hairline border, ghost hover */
+.co-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--co-surface-card);
+  color: var(--co-text-primary);
+  font-family: var(--co-font-mono);
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 1px solid rgba(0, 229, 153, 0.25);
+  border-radius: var(--co-rounded);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.co-btn-ghost:hover {
+  border-color: var(--co-primary);
+  background: rgba(0, 229, 153, 0.06);
+}
+
+/* ── 9. Badge — Pulse Status (SYS.READY) ──
+   Monospace label with animated pulse dot */
+.co-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(0, 229, 153, 0.1);
+  border: 1px solid rgba(0, 229, 153, 0.3);
+  border-radius: var(--co-rounded-full);
+  font-family: var(--co-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--co-primary);
+}
+
+.co-badge::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--co-primary);
+  animation: coPulse 2s ease-in-out infinite;
+}
+
+/* ── 10. Operational Tag ──
+   Monospace uppercase text with diamond delimiters */
+.co-tag {
+  font-family: var(--co-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--co-text-secondary);
+}
+
+/* ── 11. Telemetry Metric Card ──
+   Pitch-black bg, cybernetic border, large monospace numerics */
+.co-metric-card {
+  background: var(--co-surface-elevated);
+  border: 1px solid rgba(0, 229, 153, 0.15);
+  border-radius: var(--co-rounded-lg);
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.co-metric-card .co-metric-value {
+  font-family: var(--co-font-mono);
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 40px;
+  letter-spacing: -0.03em;
+  color: var(--co-primary);
+}
+
+.co-metric-card .co-metric-label {
+  font-family: var(--co-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--co-text-muted);
+  margin-top: 0.5rem;
+}
+
+/* ── 12. Feature / Split Card ──
+   Top-edge luminescence + hover glow increase */
+.co-feature-card {
+  background: var(--co-surface-card);
+  border: 1px solid rgba(0, 229, 153, 0.12);
+  border-radius: var(--co-rounded-lg);
+  padding: 1.5rem;
+  position: relative;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.co-feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 229, 153, 0.3), transparent);
+  transition: background 0.3s ease;
+}
+
+.co-feature-card:hover {
+  border-color: var(--co-glow-pulse);
+}
+
+.co-feature-card:hover::before {
+  background: linear-gradient(90deg, transparent, var(--co-glow-pulse), transparent);
+}
+
+/* ── 13. Marquee Ticker Strip ──
+   Continuous edge-to-edge rolling ticker */
+.co-marquee {
+  width: 100%;
+  overflow: hidden;
+  background: var(--co-surface-elevated);
+  border-top: 1px solid rgba(0, 229, 153, 0.15);
+  border-bottom: 1px solid rgba(0, 229, 153, 0.15);
+  padding: 0.75rem 0;
+}
+
+.co-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: coMarquee 20s linear infinite;
+}
+
+.co-marquee-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1rem;
+  font-family: var(--co-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--co-text-secondary);
+  white-space: nowrap;
+}
+
+.co-marquee-item::after {
+  content: '◆';
+  color: var(--co-primary);
+}
+
+@keyframes coMarquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* ── 14. Form Controls — Cybernetic Override ──
+   Charcoal bg, faint border, green focus snap */
+.co-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--co-surface-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--co-rounded-md);
+  color: var(--co-text-primary);
+  font-family: var(--co-font-body);
+  font-size: 0.9375rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.co-input::placeholder {
+  font-family: var(--co-font-mono);
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.co-input:focus {
+  border-color: var(--co-primary);
+  box-shadow: 0 0 0 1px var(--co-primary);
+}
+
+/* ── 15. Select Dropdown ──
+   Custom caret tinted green */
+.co-select {
+  appearance: none;
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  background-color: var(--co-surface-elevated);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300e599' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--co-rounded-md);
+  color: var(--co-text-primary);
+  font-family: var(--co-font-body);
+  font-size: 0.9375rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+
+.co-select:focus {
+  border-color: var(--co-primary);
+  box-shadow: 0 0 0 1px var(--co-primary);
+}
+
+/* ── 16. FAQ Accordion ──
+   Bordered rows with rotating plus icon */
+.co-accordion-item {
+  border-bottom: 1px solid rgba(0, 229, 153, 0.15);
+}
+
+.co-accordion-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1rem 0;
+  background: transparent;
+  border: none;
+  color: var(--co-text-primary);
+  font-family: var(--co-font-body);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+}
+
+.co-accordion-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 18px;
+  color: var(--co-primary);
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.co-accordion-item.open .co-accordion-icon {
+  transform: rotate(45deg);
+}
+
+.co-accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease, padding 0.35s ease;
+}
+
+.co-accordion-item.open .co-accordion-content {
+  max-height: 500px;
+  padding-bottom: 1rem;
+}
+
+.co-accordion-content p {
+  color: var(--co-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* ── 17. AI Engine Shortcut Bar ──
+   Micro-buttons with green border on hover */
+.co-shortcut-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.75rem;
+}
+
+.co-shortcut-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: var(--co-surface-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--co-rounded);
+  color: var(--co-text-secondary);
+  font-family: var(--co-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.co-shortcut-btn:hover {
+  border-color: var(--co-primary);
+  color: var(--co-primary);
+}
+
+/* ── 18. Typography Helpers ── */
+.co-display-hero {
+  font-family: var(--co-font-display);
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 64px;
+  letter-spacing: -0.02em;
+  color: var(--co-text-primary);
+}
+
+.co-headline-xl {
+  font-family: var(--co-font-display);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 48px;
+  letter-spacing: -0.015em;
+  color: var(--co-text-primary);
+}
+
+.co-headline-lg {
+  font-family: var(--co-font-display);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 36px;
+  letter-spacing: -0.01em;
+  color: var(--co-text-primary);
+}
+
+.co-headline-md {
+  font-family: var(--co-font-display);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  color: var(--co-text-primary);
+}
+
+.co-headline-sm {
+  font-family: var(--co-font-display);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  color: var(--co-text-primary);
+}
+
+.co-body-lg {
+  font-family: var(--co-font-body);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 28px;
+  color: var(--co-text-primary);
+}
+
+.co-body-md {
+  font-family: var(--co-font-body);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 24px;
+  color: var(--co-text-primary);
+}
+
+.co-body-sm {
+  font-family: var(--co-font-body);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+  color: var(--co-text-secondary);
+}
+
+.co-mono-metric {
+  font-family: var(--co-font-mono);
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 40px;
+  letter-spacing: -0.03em;
+}
+
+.co-mono-status {
+  font-family: var(--co-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.co-label-caps {
+  font-family: var(--co-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── 19. Mobile Typography Overrides ── */
+@media (max-width: 768px) {
+  .co-display-hero {
+    font-size: 36px;
+    line-height: 44px;
+    letter-spacing: -0.01em;
+  }
+
+  .co-headline-xl {
+    font-size: 28px;
+    line-height: 36px;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* ── 20. Neon Glow Utility ──
+   Generic ambient glow for any element */
+.co-glow {
+  box-shadow: 0 0 16px rgba(0, 229, 153, 0.4);
+}
+
+.co-glow-sm {
+  box-shadow: 0 0 8px rgba(0, 229, 153, 0.25);
+}
+
+.co-glow-lg {
+  box-shadow: 0 0 32px rgba(0, 229, 153, 0.35);
+}
+
+/* ── 21. Navigation Text Link ──
+   Minimalist with animated underline */
+.co-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--co-text-primary);
+  font-family: var(--co-font-body);
+  font-size: 0.875rem;
+  text-decoration: none;
+  position: relative;
+}
+
+.co-nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--co-primary);
+  transition: width 0.3s ease;
+}
+
+.co-nav-link:hover::after {
+  width: 100%;
 }
