@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard'
 import CompleteProfile from './components/CompleteProfile'
 import ForgotPassword from './components/ForgotPassword'
 import ResetPassword from './components/ResetPassword'
+import ControlCenter from './ControlCenter'
 import AppLayout from './layout/AppLayout'
 import { useAuth } from './auth/AuthContext'
 import React, { useState, useCallback } from 'react'
@@ -69,7 +70,7 @@ function App(): React.JSX.Element {
     // if (!profile?.number?.trim()) {
     //   return <CompleteProfile onComplete={(nextUser) => setAuthenticated(nextUser)} />
     // }
-    return <Dashboard />
+    return <ControlCenter />
   }
 
   if (page === 'confirm') {

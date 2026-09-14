@@ -2,6 +2,8 @@ import React from 'react'
 import { useAuth } from '../auth/AuthContext'
 import Header from '../components/Header'
 import Sidebar from '../components/SideNav'
+import Footer from '@renderer/components/Footer'
+import PhoneControl from '../components/PhoneControl'
 
 interface AppLayoutProps {
   activeId?: string
@@ -27,8 +29,21 @@ export default function AppLayout({
   }, [activeId])
 
   return (
-    <div className="root">
-      <Header deviceCount={24} connected />
+    <div className="dashboard-shell">
+      <Header
+        deviceCount={24}
+        connected
+        user={
+          layoutUser && (layoutUser.name || layoutUser.email)
+            ? {
+                name: userName,
+                plan: 'Free',
+                avatar: undefined
+              }
+            : undefined
+        }
+      />
+      
       <div className="dashboard-body">
         <Sidebar
           activeId={selectedId}
@@ -42,7 +57,15 @@ export default function AppLayout({
           onAccountSettings={() => setSelectedId('settings')}
         />
         <main className="dashboard-content">{children}</main>
+
+        {selectedId === 'control-center' && 
+        <PhoneControl
+          
+         />}
       </div>
+
+      <Footer />
+      
     </div>
   )
 }

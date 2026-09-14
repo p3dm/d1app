@@ -121,31 +121,32 @@ export default function Sidebar({
         <div className="sidebar-inner">
           {/* Dashboard / collapse toggle */}
           <div className="sidebar-dashboard">
-            <div>
-              <button
-                onClick={() => handleNavigate({ id: 'dashboard', href: '/' })}
-                className="sidebar-dashboard-button"
-              >
-                <div className="sidebar-dashboard-content">
-                  <Home className="sidebar-icon" />
-                  {!collapsed && <span>Dashboard</span>}
-                </div>
-                <span
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setCollapsed((c) => !c)
-                  }}
-                  className="sidebar-collapse-toggle"
-                >
-                  {collapsed ? (
-                    <ChevronsRight className="w-3.5 h-3.5" />
-                  ) : (
-                    <ChevronsLeft className="w-3.5 h-3.5" />
-                  )}
-                </span>
-              </button>
-            </div>
+            <button
+              onClick={() => handleNavigate({ id: 'dashboard', href: '/' })}
+              className="sidebar-dashboard-button"
+            >
+              <div className="sidebar-dashboard-content">
+                <Home className="sidebar-icon" />
+                {!collapsed && <span>Dashboard</span>}
+              </div>
+            </button>
           </div>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setCollapsed((c) => !c)
+            }}
+            className="sidebar-collapse-toggle"
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {collapsed ? (
+              <ChevronsRight className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronsLeft className="w-3.5 h-3.5" />
+            )}
+          </button>
 
           {NAV_SECTIONS.map((section) => (
             <div key={section.label} className="sidebar-section">
@@ -187,12 +188,12 @@ export default function Sidebar({
       </div>
 
       {/* Account card */}
+      {!collapsed && (
       <div className="sidebar-account-wrap">
         <div className="sidebar-account">
           <div className="sidebar-account-header">
             <div className="sidebar-account-identity">
               <div className="sidebar-avatar">{initials}</div>
-              {!collapsed && (
                 <div className="sidebar-account-info">
                   <span className="sidebar-account-name">{user.name}</span>
                   <span className="sidebar-account-node">
@@ -200,7 +201,7 @@ export default function Sidebar({
                     {user.node}
                   </span>
                 </div>
-              )}
+              
             </div>
             {!collapsed && <span className="sidebar-plan">{user.plan}</span>}
           </div>
@@ -231,6 +232,7 @@ export default function Sidebar({
           </button>
         </div>
       </div>
+      )}
     </div>
   )
 }

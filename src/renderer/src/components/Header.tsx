@@ -1,3 +1,4 @@
+import { useAuth } from '@renderer/auth/AuthContext'
 import { useEffect } from 'react'
 /**
  * Header
@@ -9,6 +10,11 @@ import { useEffect } from 'react'
  */
 
 interface HeaderProps {
+  user?: {
+    name: string
+    avatar?: string
+    plan?: string
+  }
   brand?: string
   version?: string
   onSearchClick?: () => void
@@ -18,6 +24,7 @@ interface HeaderProps {
 }
 
 export default function Header({
+  user,
   brand = 'D1A CLUSTER MATRIX',
   version,
   onSearchClick,
@@ -36,6 +43,23 @@ export default function Header({
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onSearchClick])
+
+   const { signOut } = useAuth()
+  const hasUser = Boolean(user?.name?.trim())
+  const userInitials = hasUser
+    ? user?.name
+        .split('@')[0]
+        .slice(0, 2)
+        .toUpperCase()
+    : 'SI'
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Sign out error:', error)
+    }
+  }
 
   return (
     <header className="app-header" data-purpose="primary-header">
@@ -66,6 +90,26 @@ export default function Header({
         </div>
         <div className="app-header-divider" />
         <div className="app-header-slot">{rightSlot}</div>
+        <div className="app-header-account">
+          {hasUser ? (
+            <div className="app-header-account-avatar-initials">
+              {user?.avatar ? (
+                <img src={user.avatar} alt="User Avatar" />
+              ) : (
+                <div className="app-header-account-avatar-fallback">{userInitials}</div>
+              )}
+              <div>{user?.name}</div>
+              <button type="button" className="app-header-signin" onClick={handleSignOut}>
+                SignOut
+              </button>
+
+            </div>
+          ) : (
+            <button type="button" className="app-header-signin">
+              Sign In
+            </button>
+          )}
+        </div>
       </div>
     </header>
   )
