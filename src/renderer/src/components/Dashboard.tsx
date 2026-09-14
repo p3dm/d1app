@@ -45,24 +45,18 @@ function Dashboard(): React.JSX.Element {
   }, [])
 
   return (
-    <div className="app">
-      <main>
-        <section className="section dashboard-card">
-          <div className="section-header">
-            <div className="section-title">Dashboard</div>
-            <div className="section-subtitle">Your email has been confirmed successfully.</div>
-            <div className="section-subtitle">
-              Welcome, {data.name ?? data.full_name ?? 'user'}!
-            </div>
-            <div className="section-subtitle">Email: {data.email}</div>
-            <div className="section-subtitle">Phone: {data.number}</div>
-            <button className="btn btn-primary" onClick={handleSignOut}>
-              Sign Out
-            </button>
-          </div>
-        </section>
-      </main>
-    </div>
+    <section className="section dashboard-card">
+      <div className="section-header">
+        <div className="section-title">Dashboard</div>
+        <div className="section-subtitle">Your email has been confirmed successfully.</div>
+        <div className="section-subtitle">Welcome, {data.name ?? data.full_name ?? 'user'}!</div>
+        <div className="section-subtitle">Email: {data.email}</div>
+        <div className="section-subtitle">Phone: {data.number}</div>
+        <button className="btn btn-primary" onClick={handleSignOut}>
+          Sign Out
+        </button>
+      </div>
+    </section>
   )
 }
 
