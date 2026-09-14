@@ -58,10 +58,9 @@ export default function AppLayout({
         />
         <main className="dashboard-content">{children}</main>
 
-        {selectedId === 'control-center' && 
-        <PhoneControl
-          
-         />}
+        {selectedId === 'control-center' || selectedId === 'phone-cloud' || selectedId === 'phone-shared' ? (
+          <PhoneControl />
+        ) : null}
       </div>
 
       <Footer />

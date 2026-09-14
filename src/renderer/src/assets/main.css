@@ -2905,10 +2905,12 @@ main {
 .screen-matrix-viewport {
   position: relative;
   flex: 1 1 auto;
+  height: 100%;
   min-height: 0;
   padding: 14px;
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
   background-color: #060b08;
   background-image: radial-gradient(rgb(0 229 153 / 12%) 1px, transparent 1px);
   background-size: 24px 24px;
