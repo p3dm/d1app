@@ -15,7 +15,6 @@ let viewerNatProcess: ReturnType<typeof spawn> | null = null
 let viewerNatReady: Promise<boolean> | undefined
 const HOST_UDP_PORT = 49000
 const VIEWER_UDP_PORT = 49001
-const viewerWindows: BrowserWindow[] = []
 
 function handleAuthDeepLink(url: string): void {
   console.log('[auth] deep link received')
@@ -86,6 +85,7 @@ function findExistingFile(candidates: string[], description: string): string {
 
 function getAgentEntry(): string {
   const candidates = [
+    resolve(process.resourcesPath, 'agent/dist/agent/src/index.js'),
     resolve(process.cwd(), 'src/main/agent/dist/agent/src/index.js'),
     resolve(process.cwd(), 'src/main/agent/agent.cjs'),
     resolve(app.getAppPath(), 'src/main/agent/dist/agent/src/index.js'),
@@ -94,15 +94,6 @@ function getAgentEntry(): string {
     resolve(__dirname, '../agent/agent.cjs')
   ]
   return findExistingFile(candidates, 'agent entry')
-}
-
-function getWebViewerFile(): string {
-  const candidates = [
-    resolve(process.cwd(), 'src/main/web/dist/index.html'),
-    resolve(app.getAppPath(), 'src/main/web/dist/index.html'),
-    resolve(__dirname, '../web/dist/index.html')
-  ]
-  return findExistingFile(candidates, 'web/dist/index.html')
 }
 
 function startHost(input: { rendezvousUrl?: string; stunUrl?: string } = {}): {
@@ -126,7 +117,6 @@ function startHost(input: { rendezvousUrl?: string; stunUrl?: string } = {}): {
     resolve(app.getAppPath(), 'release/AndroidRemotePortable/tools/platform-tools/adb.exe')
   ].filter(Boolean) as string[]
   const adbPath = adbCandidates.find((candidate) => existsSync(candidate))
-
   const childEnv = {
     ...process.env,
     ELECTRON_RUN_AS_NODE: '1',
@@ -149,26 +139,16 @@ function startHost(input: { rendezvousUrl?: string; stunUrl?: string } = {}): {
     stdio: ['ignore', 'pipe', 'pipe'],
     windowsHide: true
   })
-
-  forwardHostLog(hostProcess.stdout, false)
-  forwardHostLog(hostProcess.stderr, false)
-
+  forwardHostLog(hostProcess.stdout)
+  forwardHostLog(hostProcess.stderr)
   hostProcess.once('exit', (code) => {
     mainWindow?.webContents.send('host:log', `[HOST] stopped (${code ?? 'unknown'})\n`)
     hostProcess = null
   })
 
   const invite = Buffer.from(
-    JSON.stringify({
-      v: 1,
-      rendezvousUrl,
-      stunUrl: stunUrls[0],
-      stunUrls,
-      sessionId,
-      secret
-    })
+    JSON.stringify({ v: 1, rendezvousUrl, stunUrl: stunUrls[0], stunUrls, sessionId, secret })
   ).toString('base64url')
-
   return { invite, sessionId }
 }
 
@@ -179,81 +159,23 @@ function stopHost(): boolean {
   return true
 }
 
-function openViewer(encodedInvite: string): boolean {
+async function openViewer(encodedInvite: string): Promise<{
+  rendezvousUrl: string
+  sessionId: string
+  secret: string
+}> {
   const invite = parseInvite(encodedInvite)
   void startViewerNatMapping().catch((error: Error) => {
-    mainWindow?.webContents.send('host:log', `[VIEWER NAT] ${error.message}\n`)
-  })
-  createViewerWindow(invite, false)
-  return true
-}
-
-function createViewerWindow(
-  invite: {
-    rendezvousUrl: string
-    sessionId: string
-    secret: string
-    stunUrls: string[]
-    stunUrl: string
-  },
-  logToConsole: boolean
-): BrowserWindow {
-  const viewer = new BrowserWindow({
-    width: 1280,
-    height: 860,
-    minWidth: 720,
-    minHeight: 560,
-    backgroundColor: '#101214',
-    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true }
-  })
-
-  viewer.webContents.setWebRTCUDPPortRange({ min: VIEWER_UDP_PORT, max: VIEWER_UDP_PORT })
-  viewer.removeMenu()
-
-  const viewerLog = (level: string, message: string): void => {
-    const line = `${new Date().toISOString()} [VIEWER:${level}] ${message}\n`
-    mainWindow?.webContents.send('host:log', line)
-    if (logToConsole) process.stdout.write(line)
-  }
-
-  viewer.webContents.on('console-message', (_event, level, message) => {
-    viewerLog(String(level), message)
-  })
-
-  viewer.webContents.on('render-process-gone', (_event, details) => {
-    viewerLog('error', `renderer gone reason=${details.reason} exitCode=${details.exitCode}`)
-  })
-
-  viewer.webContents.on('did-fail-load', (_event, code, description) => {
-    viewerLog('error', `load failed code=${code} detail=${description}`)
-  })
-
-  viewer.on('unresponsive', () => viewerLog('warn', 'window unresponsive'))
-  viewer.on('responsive', () => viewerLog('info', 'window responsive again'))
-  viewer.on('closed', () => {
-    viewerLog('info', 'window closed')
-    const index = viewerWindows.indexOf(viewer)
-    if (index >= 0) viewerWindows.splice(index, 1)
-  })
-
-  viewerWindows.push(viewer)
-
-  void viewer.loadFile(getWebViewerFile(), {
-    query: {
-      signal: invite.rendezvousUrl,
-      session: invite.sessionId,
-      secret: invite.secret
-    }
-  })
-
-  viewer.webContents.once('did-finish-load', () => {
-    viewerLog(
-      'info',
-      `window loaded; Electron ${process.versions.electron} / Chromium ${process.versions.chrome}`
+    mainWindow?.webContents.send(
+      'host:log',
+      `[VIEWER NAT] optional helper unavailable: ${error.message}\n`
     )
   })
-
-  return viewer
+  return {
+    rendezvousUrl: invite.rendezvousUrl,
+    sessionId: invite.sessionId,
+    secret: invite.secret
+  }
 }
 
 function startViewerNatMapping(): Promise<boolean> {
@@ -276,12 +198,9 @@ function startViewerNatMapping(): Promise<boolean> {
   viewerNatReady = new Promise<boolean>((resolve, reject) => {
     let output = ''
     let settled = false
-    let timeout: NodeJS.Timeout | undefined
-
     const finish = (value: boolean | Error, shouldReject = false): void => {
       if (settled) return
       settled = true
-      if (timeout) clearTimeout(timeout)
       if (shouldReject) reject(value as Error)
       else resolve(value as boolean)
     }
@@ -305,7 +224,7 @@ function startViewerNatMapping(): Promise<boolean> {
       finish(new Error(`Viewer NAT helper stopped (${code ?? 'unknown'})`), true)
     })
 
-    timeout = setTimeout(() => finish(false), 20_000)
+    setTimeout(() => finish(false), 20_000)
   })
 
   return viewerNatReady
@@ -407,6 +326,7 @@ function createWindow(): void {
       sandbox: false
     }
   })
+  mainWindow.webContents.setWebRTCUDPPortRange({ min: VIEWER_UDP_PORT, max: VIEWER_UDP_PORT })
 
   mainWindow.on('ready-to-show', () => {
     mainWindow?.show()
@@ -453,6 +373,10 @@ app.whenReady().then(() => {
   ipcMain.handle('remote-share:startHost', (_event, input) => startHost(input))
   ipcMain.handle('remote-share:stopHost', () => stopHost())
   ipcMain.handle('remote-share:openViewer', (_event, invite) => openViewer(invite))
+  ipcMain.handle('remote-share:stopViewer', () => {
+    stopViewerNatMapping()
+    return true
+  })
 
   createWindow()
   const authUrl = process.argv.find((argument) => argument.startsWith(`${AUTH_PROTOCOL}://`))

@@ -1,22 +1,21 @@
 import Versions from './components/Versions'
 import Register from './components/Register'
 import ConfirmEmail from './components/ConfirmEmail'
-import Dashboard from './components/Dashboard'
-import CompleteProfile from './components/CompleteProfile'
 import ForgotPassword from './components/ForgotPassword'
 import ResetPassword from './components/ResetPassword'
 import ControlCenter from './ControlCenter'
+import PhoneShared from './PhoneShared'
 import AppLayout from './layout/AppLayout'
 import { useAuth } from './auth/AuthContext'
 import React, { useState, useCallback } from 'react'
 
 function App(): React.JSX.Element {
-  const { authenticated, loading: authLoading, setAuthenticated, signOut } = useAuth()
+  const { loading: authLoading, setAuthenticated, signOut } = useAuth()
   const [page, setPage] = useState<'login' | 'register' | 'confirm' | 'forgot' | 'reset'>('login')
   const [authen] = useState('true')
   const [pendingEmail, setPendingEmail] = useState('')
-  const [confirmError, setConfirmError] = useState('')
-  const { user } = useAuth()
+  const [confirmError] = useState('')
+  const [activeId, setActiveId] = useState('control-center')
 
   const handleAuthenticated = useCallback(
     (user: unknown) => {
@@ -70,7 +69,11 @@ function App(): React.JSX.Element {
     // if (!profile?.number?.trim()) {
     //   return <CompleteProfile onComplete={(nextUser) => setAuthenticated(nextUser)} />
     // }
-    return <ControlCenter />
+    return (
+      <AppLayout activeId={activeId} onNavigate={setActiveId}>
+        {activeId === 'phone-shared' ? <PhoneShared phones={[]} /> : <ControlCenter />}
+      </AppLayout>
+    )
   }
 
   if (page === 'confirm') {

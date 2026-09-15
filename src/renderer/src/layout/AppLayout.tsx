@@ -7,6 +7,7 @@ import PhoneControl from '../components/PhoneControl'
 
 interface AppLayoutProps {
   activeId?: string
+  onNavigate?: (id: string) => void
   children: React.ReactNode
 }
 
@@ -17,6 +18,7 @@ interface LayoutUser {
 
 export default function AppLayout({
   activeId = 'control-center',
+  onNavigate,
   children
 }: AppLayoutProps): React.JSX.Element {
   const { user } = useAuth()
@@ -47,7 +49,10 @@ export default function AppLayout({
       <div className="dashboard-body">
         <Sidebar
           activeId={selectedId}
-          onNavigate={({ id }) => setSelectedId(id)}
+          onNavigate={({ id }) => {
+            setSelectedId(id)
+            onNavigate?.(id)
+          }}
           user={{
             name: userName,
             plan: 'Free',

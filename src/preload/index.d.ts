@@ -28,7 +28,12 @@ interface Api {
       sessionId: string
     }>
     stopHost: () => Promise<boolean>
-    openViewer: (invite: string) => Promise<boolean>
+    openViewer: (invite: string) => Promise<{
+      rendezvousUrl: string
+      sessionId: string
+      secret: string
+    }>
+    stopViewer: () => Promise<boolean>
     onHostLog: (callback: (text: string) => void) => () => void
   }
 }

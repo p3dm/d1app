@@ -167,17 +167,17 @@ export class WebRtcClient {
       this.#callbacks.log(`[SIGNAL] closed code=${event.code} reason=${event.reason || 'none'}`)
       this.#signal = undefined
       this.#resetPeer()
-      this.#callbacks.status(
+      const status =
         event.code === 4401 || event.code === 4403
           ? 'Mã kết nối không hợp lệ'
-          : `Mất signaling (${event.code}), đang thử lại…`,
-        'error'
-      )
+          : `Mất signaling (${event.code}: ${event.reason || 'không có lý do'}), đang thử lại…`
+      this.#callbacks.status(status, 'error')
       this.#scheduleReconnect()
     })
-    socket.addEventListener('error', () =>
-      this.#callbacks.status('Không kết nối được signaling', 'error')
-    )
+    socket.addEventListener('error', () => {
+      this.#callbacks.log(`[SIGNAL ERROR] url=${url.toString()} readyState=${socket.readyState}`)
+      this.#callbacks.status(`Không kết nối được signaling: ${url.host}`, 'error')
+    })
   }
 
   async #handleSignal(raw: string): Promise<void> {

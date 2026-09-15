@@ -1,4 +1,23 @@
+import { useEffect, useRef, useState } from 'react'
 import { Cpu } from 'lucide-react'
+import { RemoteDevice } from '../../../main/web/src/remote-device'
+import type { WebRtcClient } from '../../../main/web/src/webrtc-client'
+
+interface PhoneCardProps {
+  device: {
+    id: string
+    model?: string
+    ip?: string
+    connectionTag?: string
+    apps?: string[]
+    isControlled?: boolean
+    controlledLabel?: string
+    toolbarActive?: number[]
+    [key: string]: unknown
+  }
+  onSelect?: (device: PhoneCardProps['device']) => void
+  remoteClient?: WebRtcClient
+}
 
 /**
  * PhoneCard
@@ -22,7 +41,7 @@ import { Cpu } from 'lucide-react'
  *   toolbarActive: [0, 1],         // index các ô toolbar được tô emerald
  * }
  */
-export default function PhoneCard({ device, onSelect }) {
+export default function PhoneCard({ device, onSelect, remoteClient }: PhoneCardProps) {
   const {
     id,
     model,
@@ -33,11 +52,44 @@ export default function PhoneCard({ device, onSelect }) {
     controlledLabel = 'Master mirror active',
     toolbarActive = [0]
   } = device
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const focusVideoRef = useRef<HTMLVideoElement>(null)
+  const [remoteStatus, setRemoteStatus] = useState('Đang chờ stream...')
+
+  useEffect(() => {
+    if (!remoteClient || !canvasRef.current || !focusVideoRef.current) return
+
+    let remote: RemoteDevice
+    try {
+      remote = new RemoteDevice(
+        canvasRef.current,
+        focusVideoRef.current,
+        {
+          status: (text) => setRemoteStatus(text),
+          log: () => undefined,
+          streaming: () => setRemoteStatus('Đang phát trực tiếp'),
+          disconnected: () => setRemoteStatus('Đã ngắt kết nối'),
+          controlState: (enabled) => setRemoteStatus(enabled ? 'Đang điều khiển' : 'Đã kết nối')
+        },
+        (message) => remoteClient.sendControl(id, message)
+      )
+    } catch (error) {
+      setRemoteStatus(error instanceof Error ? error.message : 'Không tạo được video decoder')
+      return
+    }
+    canvasRef.current.hidden = false
+    remoteClient.registerDevice(id, remote)
+
+    return () => {
+      remoteClient.unregisterDevice(id, remote)
+      remote.disconnect()
+    }
+  }, [id, remoteClient])
 
   return (
     <div
       onClick={() => onSelect?.(device)}
-      className={`phone-card${isControlled ? ' phone-card-controlled' : ''}`}
+      className={`phone-card${isControlled ? ' phone-card-controlled' : ''}${remoteClient ? ' phone-card-remote' : ''}`}
     >
       {/* Tag kết nối góc trên */}
       <div className="phone-card-tag-row">
@@ -67,13 +119,27 @@ export default function PhoneCard({ device, onSelect }) {
         </div>
       ) : (
         <div className="phone-card-body">
-          <div className="phone-card-apps">
-            {[0, 1, 2].map((slot) => (
-              <div key={slot} className="phone-card-app-slot">
-                {apps[slot] ?? ''}
-              </div>
-            ))}
-          </div>
+          {remoteClient ? (
+            <>
+              <canvas ref={canvasRef} className="phone-card-screen" aria-label={`Màn hình ${id}`} />
+              <video
+                ref={focusVideoRef}
+                className="phone-card-focus-screen"
+                autoPlay
+                muted
+                playsInline
+              />
+              <span className="phone-card-stream-status">{remoteStatus}</span>
+            </>
+          ) : (
+            <div className="phone-card-apps">
+              {[0, 1, 2].map((slot) => (
+                <div key={slot} className="phone-card-app-slot">
+                  {apps[slot] ?? ''}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

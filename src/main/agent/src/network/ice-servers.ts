@@ -290,10 +290,10 @@ function isTurnUdpUrl(url: string): boolean {
   return transport === undefined || transport === 'udp'
 }
 
-function isTurnTcpUrl(url: string): boolean {
-  if (/^turns:/i.test(url)) return true
-  return /^turn:/i.test(url) && /[?&]transport=tcp(?:&|$)/i.test(url)
-}
+// function isTurnTcpUrl(url: string): boolean {
+//   if (/^turns:/i.test(url)) return true
+//   return /^turn:/i.test(url) && /[?&]transport=tcp(?:&|$)/i.test(url)
+// }
 
 export function describeIceServers(configs: RtcIceServerConfig[]): string {
   return configs
