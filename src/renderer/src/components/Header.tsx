@@ -44,14 +44,9 @@ export default function Header({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onSearchClick])
 
-   const { signOut } = useAuth()
+  const { signOut } = useAuth()
   const hasUser = Boolean(user?.name?.trim())
-  const userInitials = hasUser
-    ? user?.name
-        .split('@')[0]
-        .slice(0, 2)
-        .toUpperCase()
-    : 'SI'
+  const userInitials = hasUser ? user?.name.split('@')[0].slice(0, 2).toUpperCase() : 'SI'
 
   const handleSignOut = async () => {
     try {
@@ -102,7 +97,6 @@ export default function Header({
               <button type="button" className="app-header-signin" onClick={handleSignOut}>
                 SignOut
               </button>
-
             </div>
           ) : (
             <button type="button" className="app-header-signin">

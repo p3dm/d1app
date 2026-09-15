@@ -43,7 +43,7 @@ export default function AppLayout({
             : undefined
         }
       />
-      
+
       <div className="dashboard-body">
         <Sidebar
           activeId={selectedId}
@@ -58,13 +58,14 @@ export default function AppLayout({
         />
         <main className="dashboard-content">{children}</main>
 
-        {selectedId === 'control-center' || selectedId === 'phone-cloud' || selectedId === 'phone-shared' ? (
+        {selectedId === 'control-center' ||
+        selectedId === 'phone-cloud' ||
+        selectedId === 'phone-shared' ? (
           <PhoneControl />
         ) : null}
       </div>
 
       <Footer />
-      
     </div>
   )
 }

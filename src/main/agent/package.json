@@ -1,0 +1,32 @@
+{
+  "name": "@android-remote/agent",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "tsx --test src/scrcpy/h264.test.ts src/network/control-protocol.test.ts src/network/webrtc-video.test.ts src/network/websocket-video.test.ts src/network/nat-port-mapping.test.ts src/network/ice-servers.test.ts",
+    "start": "node dist/agent/src/index.js"
+  },
+  "dependencies": {
+    "@achingbrain/nat-port-mapper": "4.0.5",
+    "@dozyio/pcp": "1.0.2",
+    "@yume-chan/adb": "2.6.3",
+    "@yume-chan/adb-scrcpy": "2.3.2",
+    "@yume-chan/adb-server-node-tcp": "2.5.2",
+    "@yume-chan/scrcpy": "2.3.0",
+    "@yume-chan/stream-extra": "2.6.1",
+    "default-gateway": "7.2.2",
+    "node-datachannel": "^0.33.1",
+    "ws": "8.21.3"
+  },
+  "devDependencies": {
+    "@types/default-gateway": "7.2.2",
+    "@types/node": "22.15.30",
+    "@types/ws": "8.18.1",
+    "tsx": "4.20.5",
+    "typescript": "5.9.2"
+  }
+}

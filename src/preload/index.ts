@@ -37,6 +37,17 @@ const api = {
     },
     selfAssignRole: (role: 'A' | 'B') => ipcRenderer.invoke('auth:selfAssignRole', role),
     getRoles: (email: string) => ipcRenderer.invoke('auth:getRoles', email)
+  },
+  remoteShare: {
+    startHost: (settings: { rendezvousUrl?: string; stunUrl?: string }) =>
+      ipcRenderer.invoke('remote-share:startHost', settings),
+    stopHost: () => ipcRenderer.invoke('remote-share:stopHost'),
+    openViewer: (invite: string) => ipcRenderer.invoke('remote-share:openViewer', invite),
+    onHostLog: (callback: (text: string) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, text: string) => callback(text)
+      ipcRenderer.on('host:log', listener)
+      return () => ipcRenderer.removeListener('host:log', listener)
+    }
   }
 }
 

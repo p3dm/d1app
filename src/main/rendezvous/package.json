@@ -1,0 +1,22 @@
+{
+  "name": "@android-remote/rendezvous",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "tsx --test src/stun.test.ts src/turn-auth.test.ts",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "ws": "8.21.3"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.30",
+    "@types/ws": "8.18.1",
+    "tsx": "4.20.5",
+    "typescript": "5.9.2"
+  }
+}

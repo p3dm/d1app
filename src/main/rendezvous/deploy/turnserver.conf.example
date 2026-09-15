@@ -1,0 +1,30 @@
+# coturn configuration for Android Remote
+# Copy to /etc/turnserver.conf and replace the two CHANGE_ME values.
+
+listening-ip=0.0.0.0
+listening-port=3478
+# A browser Viewer on a restrictive network can reach TURN over TCP/443.
+# The native Host keeps using TURN/UDP/3478 for libdatachannel compatibility.
+aux-server=CHANGE_ME_VPS_PUBLIC_IP:443
+external-ip=CHANGE_ME_VPS_PUBLIC_IP
+realm=android-remote
+fingerprint
+
+# Ephemeral TURN REST credentials. This value MUST exactly match
+# TURN_SHARED_SECRET used by the rendezvous service.
+use-auth-secret
+static-auth-secret=CHANGE_ME_LONG_RANDOM_SECRET
+
+# Expand this range before serving many concurrent users.
+min-port=49160
+max-port=49200
+
+stale-nonce=600
+no-multicast-peers
+no-loopback-peers
+no-cli
+
+# Host uses TURN/UDP 3478; Viewer uses TURN/TCP 443.
+# WebRTC payloads are still end-to-end encrypted by DTLS.
+no-tls
+no-dtls

@@ -189,11 +189,11 @@ export default function Sidebar({
 
       {/* Account card */}
       {!collapsed && (
-      <div className="sidebar-account-wrap">
-        <div className="sidebar-account">
-          <div className="sidebar-account-header">
-            <div className="sidebar-account-identity">
-              <div className="sidebar-avatar">{initials}</div>
+        <div className="sidebar-account-wrap">
+          <div className="sidebar-account">
+            <div className="sidebar-account-header">
+              <div className="sidebar-account-identity">
+                <div className="sidebar-avatar">{initials}</div>
                 <div className="sidebar-account-info">
                   <span className="sidebar-account-name">{user.name}</span>
                   <span className="sidebar-account-node">
@@ -201,37 +201,36 @@ export default function Sidebar({
                     {user.node}
                   </span>
                 </div>
-              
+              </div>
+              {!collapsed && <span className="sidebar-plan">{user.plan}</span>}
             </div>
-            {!collapsed && <span className="sidebar-plan">{user.plan}</span>}
+
+            {!collapsed && (
+              <div className="sidebar-account-details">
+                <div className="sidebar-detail-row">
+                  <span>Expired at</span>
+                  <span className="sidebar-detail-value">Unlimited</span>
+                </div>
+                <div className="sidebar-detail-row">
+                  <span>Device threads</span>
+                  <span className="sidebar-detail-value sidebar-detail-value-accent">
+                    {user.devices}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <button onClick={onUpgrade} className="sidebar-action sidebar-action-upgrade">
+              <ArrowUp className="sidebar-action-icon" />
+              {!collapsed && <span>Upgrade Plan</span>}
+            </button>
+
+            <button onClick={onAccountSettings} className="sidebar-action sidebar-action-settings">
+              <Settings className="sidebar-action-icon" />
+              {!collapsed && <span>Account Setting</span>}
+            </button>
           </div>
-
-          {!collapsed && (
-            <div className="sidebar-account-details">
-              <div className="sidebar-detail-row">
-                <span>Expired at</span>
-                <span className="sidebar-detail-value">Unlimited</span>
-              </div>
-              <div className="sidebar-detail-row">
-                <span>Device threads</span>
-                <span className="sidebar-detail-value sidebar-detail-value-accent">
-                  {user.devices}
-                </span>
-              </div>
-            </div>
-          )}
-
-          <button onClick={onUpgrade} className="sidebar-action sidebar-action-upgrade">
-            <ArrowUp className="sidebar-action-icon" />
-            {!collapsed && <span>Upgrade Plan</span>}
-          </button>
-
-          <button onClick={onAccountSettings} className="sidebar-action sidebar-action-settings">
-            <Settings className="sidebar-action-icon" />
-            {!collapsed && <span>Account Setting</span>}
-          </button>
         </div>
-      </div>
       )}
     </div>
   )

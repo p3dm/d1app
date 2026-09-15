@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; connect-src 'self' ws: wss:; script-src 'self'; style-src 'self'"
+    />
+    <title>Android Remote</title>
+  </head>
+  <body>
+    <main>
+      <header class="page-header">
+        <div>
+          <h1>Android Remote</h1>
+          <p>Xem tất cả thiết bị ở chế độ nhẹ · double-click để phóng to và điều khiển</p>
+        </div>
+        <span id="status" data-state="busy">Đang tìm thiết bị ADB…</span>
+      </header>
+
+      <p id="empty-state">Chưa có thiết bị ADB ở trạng thái <code>device</code>.</p>
+      <section id="device-grid" aria-live="polite"></section>
+    </main>
+
+    <template id="device-template">
+      <article class="device-card" aria-selected="false">
+        <header class="device-header">
+          <h2 class="device-serial"></h2>
+          <button class="focus-toggle" type="button" aria-label="Phóng to thiết bị">
+            Phóng to
+          </button>
+          <span class="device-status" data-state="busy">Đang kết nối…</span>
+        </header>
+        <div class="screen-wrap">
+          <canvas class="screen" tabindex="0"></canvas>
+          <video class="focus-screen" tabindex="0" autoplay muted playsinline hidden></video>
+          <p class="placeholder">Đang chờ video…</p>
+        </div>
+        <p class="control-hint">Double-click để phóng to và bật điều khiển</p>
+        <nav class="nav" aria-label="Điều hướng Android">
+          <button data-keycode="4" type="button" disabled>Back</button>
+          <button data-keycode="3" type="button" disabled>Home</button>
+          <button data-keycode="187" type="button" disabled>Recents</button>
+          <button data-keycode="66" type="button" disabled>Enter</button>
+          <button data-keycode="67" type="button" disabled>Backspace</button>
+        </nav>
+        <form class="text-form">
+          <input
+            class="text-input"
+            maxlength="1000"
+            placeholder="Text gửi vào Android"
+            autocomplete="off"
+            disabled
+          />
+          <button class="send-text" type="submit" disabled>Gửi</button>
+        </form>
+      </article>
+    </template>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

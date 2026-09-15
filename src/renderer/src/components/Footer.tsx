@@ -12,7 +12,9 @@ export default function Footer({
         <div className="app-footer-service">
           <span
             className={`app-footer-status-dot ${
-              adb.connected ? 'app-footer-status-dot-connected' : 'app-footer-status-dot-disconnected'
+              adb.connected
+                ? 'app-footer-status-dot-connected'
+                : 'app-footer-status-dot-disconnected'
             }`}
           />
           <span className="app-footer-label">ADB Server:</span>
@@ -64,4 +66,3 @@ export default function Footer({
     </footer>
   )
 }
- 

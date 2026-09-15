@@ -22,6 +22,15 @@ interface Api {
     selfAssignRole: (role: 'A' | 'B') => Promise<ResponseBase<unknown>>
     getRoles: (email: string) => Promise<ResponseBase<unknown>>
   }
+  remoteShare: {
+    startHost: (settings: { rendezvousUrl?: string; stunUrl?: string }) => Promise<{
+      invite: string
+      sessionId: string
+    }>
+    stopHost: () => Promise<boolean>
+    openViewer: (invite: string) => Promise<boolean>
+    onHostLog: (callback: (text: string) => void) => () => void
+  }
 }
 
 declare global {

@@ -1,0 +1,8 @@
+This portable test kit redistributes or invokes third-party software:
+
+- Node.js: https://nodejs.org/ (MIT and bundled third-party licenses)
+- Android SDK Platform-Tools / adb: https://developer.android.com/tools/releases/platform-tools
+- cloudflared: https://github.com/cloudflare/cloudflared (Apache-2.0)
+- scrcpy server: https://github.com/Genymobile/scrcpy (Apache-2.0)
+
+See the included license/notice files where available and the linked projects for full terms.

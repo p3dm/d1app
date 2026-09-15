@@ -39,7 +39,12 @@ const QUICK_ACTIONS = [
 const FILTERS = ['All', 'Cloud', 'USB', 'WIFI', 'OTG']
 
 const DEFAULT_GROUPS = [
-  { id: 'all', name: 'All devices', devices: Array.from({ length: 19 }, (_, i) => i + 1), isDefault: true },
+  {
+    id: 'all',
+    name: 'All devices',
+    devices: Array.from({ length: 19 }, (_, i) => i + 1),
+    isDefault: true
+  },
   { id: 'ig', name: 'ig', devices: [20] },
   { id: 'kh-thay', name: 'kh thay', devices: Array.from({ length: 12 }, (_, i) => 21 + i) }
 ]
@@ -96,7 +101,9 @@ function SettingsTabContent({
   }
 
   const toggleGroupExpand = (id) => {
-    setGroups((prev) => prev.map((group) => (group.id === id ? { ...group, expanded: !group.expanded } : group)))
+    setGroups((prev) =>
+      prev.map((group) => (group.id === id ? { ...group, expanded: !group.expanded } : group))
+    )
   }
 
   const toggleDevice = (groupId, deviceId) => {
@@ -282,7 +289,7 @@ export default function PhoneControl({
   onSliderChange,
   onQuickAction,
   onAddGroup,
-  onSelectDevice,
+  onSelectDevice
 }) {
   const [activeTab, setActiveTab] = useState('otg-hub')
   const [port, setPort] = useState('5555')
@@ -314,7 +321,7 @@ export default function PhoneControl({
       <div className="phone-control-header">
         <div className="phone-control-tabs">
           {TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
+            const isActive = activeTab === tab.id
             return (
               <button
                 key={tab.id}
@@ -324,7 +331,7 @@ export default function PhoneControl({
                 {isActive && <span className="phone-control-tab-marker">◆</span>}
                 {tab.label}
               </button>
-            );
+            )
           })}
         </div>
         <button onClick={onCollapse} title="Collapse" className="phone-control-collapse">
@@ -352,7 +359,9 @@ export default function PhoneControl({
                 <div className="phone-control-status-badge">
                   <span
                     className={`phone-control-status-dot ${
-                      online ? 'phone-control-status-dot-online' : 'phone-control-status-dot-offline'
+                      online
+                        ? 'phone-control-status-dot-online'
+                        : 'phone-control-status-dot-offline'
                     }`}
                   />
                   {online ? 'Online' : 'Offline'}
@@ -413,12 +422,20 @@ export default function PhoneControl({
                 </div>
 
                 <div className="phone-control-grid-2">
-                  <button onClick={handleAdd} className="phone-control-btn phone-control-btn-secondary">
-                    <Plus className="phone-control-icon-small phone-control-icon-accent" strokeWidth={3} />
+                  <button
+                    onClick={handleAdd}
+                    className="phone-control-btn phone-control-btn-secondary"
+                  >
+                    <Plus
+                      className="phone-control-icon-small phone-control-icon-accent"
+                      strokeWidth={3}
+                    />
                     Add
                   </button>
                   <button
-                    onClick={() => onScanAll?.({ port, from: rangeFrom.join('.'), to: rangeTo.join('.') })}
+                    onClick={() =>
+                      onScanAll?.({ port, from: rangeFrom.join('.'), to: rangeTo.join('.') })
+                    }
                     className="phone-control-btn phone-control-btn-primary"
                   >
                     <RefreshCw className="phone-control-icon-small" />
@@ -433,7 +450,10 @@ export default function PhoneControl({
                     <span className="phone-control-section-mark">◆</span>
                     Saved networks
                   </span>
-                  <button onClick={() => onScanAll?.({ all: true })} className="phone-control-scan-small">
+                  <button
+                    onClick={() => onScanAll?.({ all: true })}
+                    className="phone-control-scan-small"
+                  >
                     <RefreshCw className="phone-control-icon-small phone-control-icon-accent" />
                     Scan
                   </button>
@@ -444,11 +464,17 @@ export default function PhoneControl({
                     <div key={net.id} className="phone-control-saved-item">
                       <div className="phone-control-network-header">
                         <span className="phone-control-network-id">{net.id}</span>
-                        <button onClick={() => onScanNetwork?.(net)} className="phone-control-network-scan">
+                        <button
+                          onClick={() => onScanNetwork?.(net)}
+                          className="phone-control-network-scan"
+                        >
                           <Search className="phone-control-icon-small" />
                           Scan
                         </button>
-                        <button onClick={() => handleDeleteNetwork(net.id)} className="phone-control-network-delete">
+                        <button
+                          onClick={() => handleDeleteNetwork(net.id)}
+                          className="phone-control-network-delete"
+                        >
                           ×
                         </button>
                       </div>
@@ -468,5 +494,5 @@ export default function PhoneControl({
         </div>
       </div>
     </aside>
-  );
+  )
 }

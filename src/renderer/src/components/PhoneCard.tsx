@@ -1,4 +1,4 @@
-import { Cpu } from "lucide-react";
+import { Cpu } from 'lucide-react'
 
 /**
  * PhoneCard
@@ -27,21 +27,21 @@ export default function PhoneCard({ device, onSelect }) {
     id,
     model,
     ip,
-    connectionTag = "OTG",
+    connectionTag = 'OTG',
     apps = [],
     isControlled = false,
-    controlledLabel = "Master mirror active",
-    toolbarActive = [0],
-  } = device;
+    controlledLabel = 'Master mirror active',
+    toolbarActive = [0]
+  } = device
 
   return (
     <div
       onClick={() => onSelect?.(device)}
-      className={`phone-card${isControlled ? " phone-card-controlled" : ""}`}
+      className={`phone-card${isControlled ? ' phone-card-controlled' : ''}`}
     >
       {/* Tag kết nối góc trên */}
       <div className="phone-card-tag-row">
-        <span className={`phone-card-tag${isControlled ? " phone-card-tag-controlled" : ""}`}>
+        <span className={`phone-card-tag${isControlled ? ' phone-card-tag-controlled' : ''}`}>
           <span className="phone-card-tag-dot" />
           {connectionTag}
         </span>
@@ -50,7 +50,7 @@ export default function PhoneCard({ device, onSelect }) {
       {/* ID + tên máy + IP */}
       <div className="phone-card-info">
         <div className="phone-card-id">{id}</div>
-        <div className={`phone-card-model${isControlled ? " phone-card-model-controlled" : ""}`}>
+        <div className={`phone-card-model${isControlled ? ' phone-card-model-controlled' : ''}`}>
           {model}
         </div>
         <div className="phone-card-ip">{ip}</div>
@@ -70,7 +70,7 @@ export default function PhoneCard({ device, onSelect }) {
           <div className="phone-card-apps">
             {[0, 1, 2].map((slot) => (
               <div key={slot} className="phone-card-app-slot">
-                {apps[slot] ?? ""}
+                {apps[slot] ?? ''}
               </div>
             ))}
           </div>
@@ -84,17 +84,19 @@ export default function PhoneCard({ device, onSelect }) {
             <div
               key={slot}
               className={`phone-card-toolbar-slot${
-                toolbarActive.includes(slot) ? " phone-card-toolbar-slot-active" : ""
+                toolbarActive.includes(slot) ? ' phone-card-toolbar-slot-active' : ''
               }`}
             />
           ))}
         </div>
-        <div className={`phone-card-nav-row${isControlled ? " phone-card-nav-row-controlled" : ""}`}>
+        <div
+          className={`phone-card-nav-row${isControlled ? ' phone-card-nav-row-controlled' : ''}`}
+        >
           <span>|||</span>
           <span>○</span>
           <span>&lt;</span>
         </div>
       </div>
     </div>
-  );
+  )
 }

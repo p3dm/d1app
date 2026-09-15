@@ -1,0 +1,26 @@
+[Unit]
+Description=Android Remote rendezvous and TURN credential service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=androidremote
+Group=androidremote
+WorkingDirectory=/opt/android-remote
+Environment=RENDEZVOUS_BIND_HOST=0.0.0.0
+Environment=STUN_BIND_HOST=0.0.0.0
+Environment=RENDEZVOUS_PORT=8443
+Environment=STUN_PORT=3478
+Environment=STUN_ENABLED=false
+EnvironmentFile=-/etc/android-remote.env
+ExecStart=/usr/bin/node /opt/android-remote/server.cjs
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

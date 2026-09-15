@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+    />
+    <title>Android Remote</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font:
+          15px system-ui,
+          sans-serif;
+        background: #101214;
+        color: #eef1f3;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      main {
+        width: min(840px, 100%);
+        margin: auto;
+        padding: 28px;
+      }
+      h1,
+      h2,
+      p {
+        margin: 0;
+      }
+      header p {
+        margin-top: 6px;
+        color: #9ba6ad;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 24px;
+      }
+      section {
+        background: #171a1d;
+        border: 1px solid #30353a;
+        border-radius: 12px;
+        padding: 18px;
+      }
+      h2 {
+        font-size: 18px;
+        margin-bottom: 12px;
+      }
+      label {
+        display: block;
+        margin: 10px 0 5px;
+        color: #b9c1c6;
+      }
+      input,
+      button,
+      textarea {
+        width: 100%;
+        border: 1px solid #3a4248;
+        border-radius: 7px;
+        background: #0f1113;
+        color: #fff;
+        padding: 10px;
+        font: inherit;
+      }
+      button {
+        margin-top: 12px;
+        cursor: pointer;
+        background: #2962ff;
+        border-color: #2962ff;
+        font-weight: 600;
+      }
+      button.secondary {
+        background: #24292d;
+        border-color: #3a4248;
+      }
+      textarea {
+        min-height: 112px;
+        resize: vertical;
+        word-break: break-all;
+      }
+      #host-result {
+        margin-top: 14px;
+      }
+      #host-result[hidden] {
+        display: none;
+      }
+      #status {
+        margin-top: 12px;
+        color: #edc96b;
+        min-height: 22px;
+      }
+      pre {
+        height: 180px;
+        overflow: auto;
+        white-space: pre-wrap;
+        background: #0b0d0e;
+        border-radius: 7px;
+        padding: 10px;
+        color: #aeb8bf;
+      }
+      .note {
+        margin-top: 18px;
+        color: #ffcf70;
+      }
+      @media (max-width: 720px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        main {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Android Remote</h1>
+        <p>WebRTC direct-first · tự động dùng TURN trên VPS khi NAT khó</p>
+      </header>
+      <div class="grid">
+        <section>
+          <h2>Máy A — Chia sẻ phone</h2>
+          <label for="rendezvous">Rendezvous</label>
+          <input id="rendezvous" value="ws://103.6.235.189:8443/rendezvous" />
+          <label for="stun">STUN trên VPS</label>
+          <input id="stun" value="stun:103.6.235.189:3478" />
+          <button id="start-host">Bắt đầu chia sẻ</button>
+          <div id="host-result" hidden>
+            <label for="invite">Mã kết nối gửi cho máy B</label>
+            <textarea id="invite" readonly></textarea>
+            <button id="copy" class="secondary">Sao chép mã</button>
+            <button id="stop-host" class="secondary">Dừng Host</button>
+          </div>
+        </section>
+        <section>
+          <h2>Máy B — Xem và điều khiển</h2>
+          <label for="viewer-invite">Dán mã từ máy A</label>
+          <textarea id="viewer-invite" placeholder="Mã kết nối…"></textarea>
+          <button id="open-viewer">Kết nối Host</button>
+          <p class="note">
+            App ưu tiên đường trực tiếp; nếu không xuyên NAT được sẽ tự động relay qua TURN/UDP trên
+            VPS.
+          </p>
+        </section>
+      </div>
+      <p id="status"></p>
+      <pre id="logs">Chưa có log.</pre>
+      <button id="copy-logs" class="secondary">Sao chép log A + B</button>
+    </main>
+    <script>
+      const api = window.androidRemote
+      const status = document.querySelector('#status')
+      const logs = document.querySelector('#logs')
+      const invite = document.querySelector('#invite')
+      const maxLogCharacters = 1_500_000
+      api.onHostLog((text) => {
+        const combined = logs.textContent + text
+        logs.textContent =
+          combined.length > maxLogCharacters ? combined.slice(-maxLogCharacters) : combined
+        logs.scrollTop = logs.scrollHeight
+      })
+      document.querySelector('#copy-logs').onclick = async () => {
+        await navigator.clipboard.writeText(logs.textContent)
+        status.textContent = 'Đã sao chép log máy A + B.'
+      }
+      document.querySelector('#start-host').onclick = async () => {
+        try {
+          status.textContent = 'Đang khởi động Host…'
+          logs.textContent = ''
+          const result = await api.startHost({
+            rendezvousUrl: document.querySelector('#rendezvous').value,
+            stunUrl: document.querySelector('#stun').value
+          })
+          invite.value = result.invite
+          document.querySelector('#host-result').hidden = false
+          status.textContent = `Host sẵn sàng, session ${result.sessionId}`
+        } catch (error) {
+          status.textContent = error.message
+        }
+      }
+      document.querySelector('#copy').onclick = async () => {
+        await navigator.clipboard.writeText(invite.value)
+        status.textContent = 'Đã sao chép mã kết nối.'
+      }
+      document.querySelector('#stop-host').onclick = async () => {
+        await api.stopHost()
+        status.textContent = 'Đã dừng Host.'
+      }
+      document.querySelector('#open-viewer').onclick = async () => {
+        try {
+          await api.openViewer(document.querySelector('#viewer-invite').value)
+          status.textContent = 'Đã mở Viewer.'
+        } catch (error) {
+          status.textContent = error.message
+        }
+      }
+    </script>
+  </body>
+</html>
