@@ -78,16 +78,23 @@ export class WebRtcClient {
         endpoint.attachChannel(kind, channel)
       }
     }
+    if (this.#selectedSerial === serial && this.#focusStream) {
+      endpoint.setFocusStream(this.#focusStream)
+    }
     this.#sendSystem({ type: 'subscribe', serial })
   }
 
   unregisterDevice(serial: string, endpoint: WebRtcDeviceEndpoint): void {
     if (this.#endpoints.get(serial) !== endpoint) return
-    this.#sendSystem({ type: 'unsubscribe', serial })
+    // React replaces the thumbnail endpoint with the inspector endpoint when a
+    // device is focused. Keep the selection and its channels alive during that
+    // hand-off; the incoming inspector endpoint will immediately reattach them.
     if (this.#selectedSerial === serial) {
-      endpoint.setFocusStream(undefined)
-      this.#selectedSerial = undefined
+      this.#endpoints.delete(serial)
+      return
     }
+
+    this.#sendSystem({ type: 'unsubscribe', serial })
     this.#endpoints.delete(serial)
     const channels = this.#deviceChannels.get(serial)
     this.#deviceChannels.delete(serial)

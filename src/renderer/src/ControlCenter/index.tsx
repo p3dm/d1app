@@ -10,7 +10,7 @@ function ControlCenter(): React.JSX.Element {
   const selectedDevice = SAMPLE_DEVICES.find((device) => device.id === selectedDeviceId) ?? null
 
   return (
-    <section className="section control-center">
+    <section className="section control-center screen-matrix-viewport">
       <PhoneGrid
         devices={SAMPLE_DEVICES}
         onSelectDevice={(device) => setSelectedDeviceId(device.id)}

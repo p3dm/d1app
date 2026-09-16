@@ -1,1 +1,1 @@
-export { SAMPLE_DEVICES } from './sampleDevices'
+export { SAMPLE_DEVICES, SAMPLE_DEVICE_GRID, SAMPLE_SESSIONS } from './sampleDevices'

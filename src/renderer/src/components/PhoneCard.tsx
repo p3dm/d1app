@@ -13,10 +13,10 @@ interface PhoneCardProps {
     isControlled?: boolean
     controlledLabel?: string
     toolbarActive?: number[]
-    [key: string]: unknown
   }
   onSelect?: (device: PhoneCardProps['device']) => void
   remoteClient?: WebRtcClient
+  selected?: boolean
 }
 
 /**
@@ -41,7 +41,12 @@ interface PhoneCardProps {
  *   toolbarActive: [0, 1],         // index các ô toolbar được tô emerald
  * }
  */
-export default function PhoneCard({ device, onSelect, remoteClient }: PhoneCardProps) {
+export default function PhoneCard({
+  device,
+  onSelect,
+  remoteClient,
+  selected = false
+}: PhoneCardProps): React.JSX.Element {
   const {
     id,
     model,
@@ -49,8 +54,7 @@ export default function PhoneCard({ device, onSelect, remoteClient }: PhoneCardP
     connectionTag = 'OTG',
     apps = [],
     isControlled = false,
-    controlledLabel = 'Master mirror active',
-    toolbarActive = [0]
+    controlledLabel = 'Master mirror active'
   } = device
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const focusVideoRef = useRef<HTMLVideoElement>(null)
@@ -86,14 +90,25 @@ export default function PhoneCard({ device, onSelect, remoteClient }: PhoneCardP
     }
   }, [id, remoteClient])
 
+  const isSelected = selected || isControlled
+
   return (
     <div
-      onClick={() => onSelect?.(device)}
-      className={`phone-card${isControlled ? ' phone-card-controlled' : ''}${remoteClient ? ' phone-card-remote' : ''}`}
+      onDoubleClick={() => onSelect?.(device)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onSelect?.(device)
+        }
+      }}
+      className={`phone-card${isSelected ? ' phone-card-controlled' : ''}${remoteClient ? ' phone-card-remote' : ''}`}
+      role="button"
+      tabIndex={0}
+      aria-pressed={isSelected}
     >
       {/* Tag kết nối góc trên */}
       <div className="phone-card-tag-row">
-        <span className={`phone-card-tag${isControlled ? ' phone-card-tag-controlled' : ''}`}>
+        <span className={`phone-card-tag${isSelected ? ' phone-card-tag-controlled' : ''}`}>
           <span className="phone-card-tag-dot" />
           {connectionTag}
         </span>
@@ -102,14 +117,14 @@ export default function PhoneCard({ device, onSelect, remoteClient }: PhoneCardP
       {/* ID + tên máy + IP */}
       <div className="phone-card-info">
         <div className="phone-card-id">{id}</div>
-        <div className={`phone-card-model${isControlled ? ' phone-card-model-controlled' : ''}`}>
+        <div className={`phone-card-model${isSelected ? ' phone-card-model-controlled' : ''}`}>
           {model}
         </div>
         <div className="phone-card-ip">{ip}</div>
       </div>
 
       {/* Vùng giữa: app đang mở, hoặc thông báo "đang được điều khiển" */}
-      {isControlled ? (
+      {isSelected ? (
         <div className="phone-card-controlled-body">
           <div className="phone-card-controlled-icon">
             <Cpu size={20} />
@@ -142,27 +157,6 @@ export default function PhoneCard({ device, onSelect, remoteClient }: PhoneCardP
           )}
         </div>
       )}
-
-      {/* Thanh mini toolbar dưới cùng */}
-      <div className="phone-card-toolbar">
-        <div className="phone-card-toolbar-row">
-          {[0, 1, 2, 3].map((slot) => (
-            <div
-              key={slot}
-              className={`phone-card-toolbar-slot${
-                toolbarActive.includes(slot) ? ' phone-card-toolbar-slot-active' : ''
-              }`}
-            />
-          ))}
-        </div>
-        <div
-          className={`phone-card-nav-row${isControlled ? ' phone-card-nav-row-controlled' : ''}`}
-        >
-          <span>|||</span>
-          <span>○</span>
-          <span>&lt;</span>
-        </div>
-      </div>
     </div>
   )
 }

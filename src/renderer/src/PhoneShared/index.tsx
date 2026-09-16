@@ -26,23 +26,25 @@ function PhoneShared({ phones }: PhoneSharedProps) {
     model: phone.model ?? phone.serial,
     ip: phone.ip ?? 'Network'
   }))
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(phones[0]?.serial ?? null)
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null)
   const [invite, setInvite] = useState('')
   const [rtcClient, setRtcClient] = useState<WebRtcClient | null>(null)
   const [status, setStatus] = useState('')
   const [view, setView] = useState<'setup' | 'control'>('setup')
-
-  const selectedDevice = devices.find((device) => device.id === selectedDeviceId) ?? null
 
   useEffect(() => {
     setConnectedPhones(phones)
   }, [phones])
 
   useEffect(() => {
-    if (!connectedPhones.some((phone) => phone.serial === selectedDeviceId)) {
-      setSelectedDeviceId(connectedPhones[0]?.serial ?? null)
+    if (
+      selectedDeviceId != null &&
+      !connectedPhones.some((phone) => phone.serial === selectedDeviceId)
+    ) {
+      rtcClient?.clearSelection(selectedDeviceId)
+      setSelectedDeviceId(null)
     }
-  }, [connectedPhones, selectedDeviceId])
+  }, [connectedPhones, rtcClient, selectedDeviceId])
 
   const handleConnect = async (): Promise<void> => {
     try {
@@ -114,6 +116,10 @@ function PhoneShared({ phones }: PhoneSharedProps) {
       onSelectDevice={(deviceId) => {
         setSelectedDeviceId(deviceId)
         rtcClient.selectDevice(deviceId)
+      }}
+      onCloseFocused={() => {
+        if (selectedDeviceId) rtcClient.clearSelection(selectedDeviceId)
+        setSelectedDeviceId(null)
       }}
       onDisconnect={() => void handleDisconnect()}
     />

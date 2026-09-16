@@ -4,6 +4,7 @@ import Header from '../components/Header'
 import Sidebar from '../components/SideNav'
 import Footer from '@renderer/components/Footer'
 import PhoneControl from '../components/PhoneControl'
+import SharedConfig from '@renderer/components/SharedConfig'
 
 interface AppLayoutProps {
   activeId?: string
@@ -63,11 +64,8 @@ export default function AppLayout({
         />
         <main className="dashboard-content">{children}</main>
 
-        {selectedId === 'control-center' ||
-        selectedId === 'phone-cloud' ||
-        selectedId === 'phone-shared' ? (
-          <PhoneControl />
-        ) : null}
+        {selectedId === 'control-center' || selectedId === 'phone-cloud' ? <PhoneControl /> : null}
+        {selectedId === 'phone-shared' ? <SharedConfig /> : null}
       </div>
 
       <Footer />

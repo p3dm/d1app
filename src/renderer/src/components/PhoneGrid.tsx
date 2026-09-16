@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState, type JSX } from 'react'
+import { type JSX } from 'react'
 import PhoneCard from './PhoneCard'
-import { RemoteDevice } from '../../../main/web/src/remote-device'
 import type { WebRtcClient } from '../../../main/web/src/webrtc-client'
-import type { ControlMessage } from '../../../main/shared/protocol'
+import DeviceStream from './DeviceStream'
 
 export interface PhoneGridDevice {
   id: string
@@ -13,7 +12,6 @@ export interface PhoneGridDevice {
   isControlled?: boolean
   controlledLabel?: string
   toolbarActive?: number[]
-  [key: string]: unknown
 }
 
 interface PhoneGridProps {
@@ -23,80 +21,52 @@ interface PhoneGridProps {
   selectedDeviceId?: string | null
 }
 
-function WebRtcDeviceTile({
-  device,
-  remoteClient,
-  onSelect,
-  selected
-}: {
+interface WebRtcDeviceTileProps {
   device: PhoneGridDevice
   remoteClient: WebRtcClient
   onSelect?: (device: PhoneGridDevice) => void
   selected?: boolean
-}): JSX.Element {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const focusVideoRef = useRef<HTMLVideoElement>(null)
-  const [status, setStatus] = useState('Đang chờ stream...')
+}
 
-  useEffect(() => {
-    if (!canvasRef.current || !focusVideoRef.current) return
-
-    const remote = new RemoteDevice(
-      canvasRef.current,
-      focusVideoRef.current,
-      {
-        status: (text) => setStatus(text),
-        log: () => undefined,
-        streaming: () => setStatus('Đang phát trực tiếp'),
-        disconnected: () => setStatus('Đã ngắt kết nối'),
-        controlState: (enabled) => setStatus(enabled ? 'Đang điều khiển' : 'Đã kết nối')
-      },
-      (message) => remoteClient.sendControl(device.id, message)
-    )
-
-    remoteClient.registerDevice(device.id, remote)
-    return () => {
-      remoteClient.unregisterDevice(device.id, remote)
-      remote.disconnect()
-    }
-  }, [device.id, remoteClient])
-
-  const sendKey = (keyCode: number): void => {
-    const message: ControlMessage = { type: 'key', action: 'press', keyCode }
-    remoteClient.sendControl(device.id, message)
-  }
-
+export function WebRtcDeviceTile({
+  device,
+  remoteClient,
+  onSelect,
+  selected = false
+}: WebRtcDeviceTileProps): JSX.Element {
   return (
-    <div
-      className={`webrtc-device-tile${selected ? ' is-selected' : ''}`}
-      onClick={() => onSelect?.(device)}
+    <article
+      className={`webrtc-device-tile${selected ? ' webrtc-device-tile-selected' : ''}`}
       onDoubleClick={() => onSelect?.(device)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onSelect?.(device)
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-pressed={selected}
+      aria-label={`Focus ${device.model ?? device.id}`}
     >
       <div className="webrtc-device-tile-header">
         <strong>{device.model ?? device.id}</strong>
+
         <span>{device.connectionTag ?? 'WebRTC'}</span>
       </div>
-      <div className="webrtc-device-screen">
-        <canvas ref={canvasRef} aria-label={`Màn hình ${device.id}`} />
-        <video ref={focusVideoRef} autoPlay muted playsInline />
-        <span>{status}</span>
-      </div>
+
       {selected ? (
-        <div className="webrtc-device-controls" onClick={(event) => event.stopPropagation()}>
-          {[
-            ['Back', 4],
-            ['Home', 3],
-            ['Recents', 187],
-            ['Enter', 66]
-          ].map(([label, keyCode]) => (
-            <button key={label} type="button" onClick={() => sendKey(keyCode as number)}>
-              {label}
-            </button>
-          ))}
+        <div className="webrtc-device-selected-state">
+          <span aria-hidden="true">★</span>
+          <strong>CONTROLLED</strong>
+          <small>Master mirror active</small>
         </div>
-      ) : null}
+      ) : (
+        <DeviceStream device={device} remoteClient={remoteClient} />
+      )}
+
       <small>{device.ip ?? device.id}</small>
-    </div>
+    </article>
   )
 }
 
@@ -114,6 +84,7 @@ function WebRtcDeviceTile({
  *
  * `onSelectDevice`: callback khi người dùng bấm vào một thẻ.
  */
+
 export default function PhoneGrid({
   devices,
   onSelectDevice,
@@ -121,30 +92,42 @@ export default function PhoneGrid({
   selectedDeviceId
 }: PhoneGridProps): JSX.Element {
   if (devices.length === 0) {
-    return <div className="phone-grid-empty">Chưa có thiết bị nào được kết nối.</div>
+    return (
+      <main data-purpose="screen-matrix-viewport">
+        <div className="phone-grid-empty">Chưa có thiết bị nào được kết nối.</div>
+      </main>
+    )
   }
+
+  const selectedDevice =
+    selectedDeviceId != null ? devices.find((device) => device.id === selectedDeviceId) : undefined
 
   return (
     <main className="screen-matrix-viewport" data-purpose="screen-matrix-viewport">
-      {devices.length === 0 ? (
-        <div className="phone-grid-empty">Chưa có thiết bị nào được kết nối.</div>
-      ) : (
-        <div className="phone-grid">
-          {devices.map((device) =>
-            remoteClient ? (
+      <div className="phone-grid">
+        {devices.map((device) => {
+          if (remoteClient) {
+            return (
               <WebRtcDeviceTile
                 key={device.id}
                 device={device}
                 remoteClient={remoteClient}
                 onSelect={onSelectDevice}
-                selected={selectedDeviceId === device.id}
+                selected={selectedDevice?.id === device.id}
               />
-            ) : (
-              <PhoneCard key={device.id} device={device} onSelect={onSelectDevice} />
             )
-          )}
-        </div>
-      )}
+          }
+
+          return (
+            <PhoneCard
+              key={device.id}
+              device={device}
+              onSelect={onSelectDevice}
+              selected={selectedDevice?.id === device.id}
+            />
+          )
+        })}
+      </div>
     </main>
   )
 }
