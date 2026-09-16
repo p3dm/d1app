@@ -61,14 +61,14 @@ export default function PhoneSharedControl({
             </aside>
           ) : null}
 
-          <main className="" data-purpose="screen-matrix-viewport">
+          <div className="screen-matrix-viewport" data-purpose="screen-matrix-viewport">
             <PhoneGrid
               devices={devices}
               remoteClient={remoteClient}
               selectedDeviceId={selectedDeviceId}
               onSelectDevice={(device) => onSelectDevice(device.id)}
             />
-          </main>
+          </div>
         </div>
       </div>
 

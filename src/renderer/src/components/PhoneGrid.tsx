@@ -93,7 +93,7 @@ export default function PhoneGrid({
 }: PhoneGridProps): JSX.Element {
   if (devices.length === 0) {
     return (
-      <main data-purpose="screen-matrix-viewport">
+      <main className="screen-matrix-viewport" data-purpose="screen-matrix-viewport">
         <div className="phone-grid-empty">Chưa có thiết bị nào được kết nối.</div>
       </main>
     )
@@ -103,7 +103,7 @@ export default function PhoneGrid({
     selectedDeviceId != null ? devices.find((device) => device.id === selectedDeviceId) : undefined
 
   return (
-    <main className="screen-matrix-viewport" data-purpose="screen-matrix-viewport">
+    <main data-purpose="screen-matrix-viewport">
       <div className="phone-grid">
         {devices.map((device) => {
           if (remoteClient) {
