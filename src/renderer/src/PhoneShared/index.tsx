@@ -16,45 +16,48 @@ export interface SharedPhone {
 
 interface PhoneSharedProps {
   phones: SharedPhone[]
+  onPhonesChange: (phones: SharedPhone[]) => void
+  selectedDeviceId: string | null
+  onSelectedDevice: (deviceId: string) => void
 }
 
-function PhoneShared({ phones }: PhoneSharedProps) {
-  const [connectedPhones, setConnectedPhones] = useState<SharedPhone[]>(phones)
-  const devices = connectedPhones.map((phone) => ({
+function PhoneShared({
+  phones,
+  onPhonesChange,
+  selectedDeviceId,
+  onSelectedDevice
+}: PhoneSharedProps) {
+  const devices = phones.map((phone) => ({
     ...phone,
     id: phone.serial,
     model: phone.model ?? phone.serial,
     ip: phone.ip ?? 'Network'
   }))
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null)
   const [invite, setInvite] = useState('')
   const [rtcClient, setRtcClient] = useState<WebRtcClient | null>(null)
   const [status, setStatus] = useState('')
   const [view, setView] = useState<'setup' | 'control'>('setup')
 
   useEffect(() => {
-    setConnectedPhones(phones)
-  }, [phones])
+    if (selectedDeviceId != null && !phones.some((phone) => phone.serial === selectedDeviceId)) {
+      rtcClient?.clearSelection(selectedDeviceId)
+      onSelectedDevice('')
+    }
+  }, [phones, rtcClient, selectedDeviceId, onSelectedDevice])
 
   useEffect(() => {
-    if (
-      selectedDeviceId != null &&
-      !connectedPhones.some((phone) => phone.serial === selectedDeviceId)
-    ) {
-      rtcClient?.clearSelection(selectedDeviceId)
-      setSelectedDeviceId(null)
-    }
-  }, [connectedPhones, rtcClient, selectedDeviceId])
+    if (rtcClient && selectedDeviceId) rtcClient.selectDevice(selectedDeviceId)
+  }, [rtcClient, selectedDeviceId])
 
   const handleConnect = async (): Promise<void> => {
     try {
       setStatus('Đang kết nối tới Host...')
-      setConnectedPhones([])
+      onPhonesChange([])
       const connection = await window.api.remoteShare.openViewer(invite.trim())
       const client = new WebRtcClient(
         {
           devices: (serials) => {
-            setConnectedPhones(
+            onPhonesChange(
               serials.map((serial) => ({ serial, connectionTag: 'WebRTC', isControlled: false }))
             )
             setView('control')
@@ -80,7 +83,7 @@ function PhoneShared({ phones }: PhoneSharedProps) {
     rtcClient?.close()
     setRtcClient(null)
     await Promise.all([window.api.remoteShare.stopViewer(), window.api.remoteShare.stopHost()])
-    setConnectedPhones([])
+    onPhonesChange([])
     setStatus('Đã ngắt kết nối Host')
     setView('setup')
   }
@@ -114,12 +117,12 @@ function PhoneShared({ phones }: PhoneSharedProps) {
       status={status}
       selectedDeviceId={selectedDeviceId}
       onSelectDevice={(deviceId) => {
-        setSelectedDeviceId(deviceId)
+        onSelectedDevice(deviceId)
         rtcClient.selectDevice(deviceId)
       }}
       onCloseFocused={() => {
         if (selectedDeviceId) rtcClient.clearSelection(selectedDeviceId)
-        setSelectedDeviceId(null)
+        onSelectedDevice('')
       }}
       onDisconnect={() => void handleDisconnect()}
     />

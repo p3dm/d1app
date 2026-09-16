@@ -4,17 +4,17 @@ import { SAMPLE_DEVICE_GRID, SAMPLE_SESSIONS } from './sampleDevices'
 
 type Session = (typeof SAMPLE_SESSIONS)[number]
 type Device = (typeof SAMPLE_DEVICE_GRID)[number]
-
 type PermissionKey = 'screenView' | 'touchControl' | 'adbAccess'
 
 type Permissions = Record<PermissionKey, boolean>
+
+const PERMISSION_OPTIONS: Array<{ key: PermissionKey; label: string }> = [
+  { key: 'screenView', label: 'Screen view' },
+  { key: 'touchControl', label: 'Touch control' },
+  { key: 'adbAccess', label: 'ADB shell access' }
+]
 /**
  * Dữ liệu mẫu — thay bằng danh sách phiên chia sẻ thật lấy từ API.
- *
- * status quyết định toàn bộ màu sắc của thẻ (viền, badge, progress bar,
- * "days left", icon email):
- *   "ok"     → emerald (còn nhiều ngày, an toàn)
- *   "warn"   → trắng/trung tính (sắp hết hạn, chưa nguy cấp)
  *   "danger" → đỏ (gần hết hạn hoặc lỗi xác thực — có icon ⚠ và nút Re-auth)
  */
 
@@ -75,7 +75,6 @@ function SettingTab({
 
   return (
     <>
-      {/* Device Grid selector */}
       <div className="share-drawer-device-grid-head">
         <span className="share-drawer-sessions-label">
           Device grid
@@ -98,7 +97,7 @@ function SettingTab({
       </div>
 
       <div className="share-drawer-device-grid">
-        {devices.map((device) => {
+        {devices.map((device, index) => {
           const isSelected = selectedIds.has(device.id)
           const isRented = device.status === 'rented'
           return (
@@ -108,10 +107,10 @@ function SettingTab({
               disabled={isRented}
               title={
                 isRented
-                  ? `Device ${device.id}: Rented (${device.group})`
+                  ? `Device ${index + 1}: Rented (${device.group})`
                   : isSelected
-                    ? `Device ${device.id}: Selected`
-                    : `Device ${device.id}: Available`
+                    ? `Device ${index + 1}: Selected`
+                    : `Device ${index + 1}: Available`
               }
               onClick={() => onToggleDevice(device.id)}
               className={`share-drawer-device-btn${
@@ -122,7 +121,7 @@ function SettingTab({
                     : ''
               }`}
             >
-              <span>{device.id}</span>
+              <span>{index + 1}</span>
               {isRented && <span className="share-drawer-device-btn-dot" />}
             </button>
           )
@@ -150,11 +149,7 @@ function SettingTab({
       <div className="share-drawer-session-card">
         <span className="share-drawer-sessions-label">Granular permissions</span>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {[
-            { key: 'screenView', label: 'Screen view' },
-            { key: 'touchControl', label: 'Touch control' },
-            { key: 'adbAccess', label: 'ADB shell access' }
-          ].map((perm) => {
+          {PERMISSION_OPTIONS.map((perm) => {
             const isOn = permissions[perm.key]
             return (
               <div key={perm.key} className="share-drawer-permission-row">
@@ -471,6 +466,9 @@ function SharedSessionTab({
 interface ShareConfigDrawerProps {
   sessions?: Session[]
   deviceGrid?: Device[]
+  selectedIds: string[]
+  onSelectionChange: (ids: string[]) => void
+  onSelectedDevice?: (deviceId: string) => void
   onCollapse?: () => void
   onInspect?: (session: Session) => void
   onRevoke?: (session: Session) => void
@@ -488,6 +486,9 @@ interface ShareConfigDrawerProps {
 export default function ShareConfigDrawer({
   sessions = SAMPLE_SESSIONS,
   deviceGrid = SAMPLE_DEVICE_GRID,
+  selectedIds,
+  onSelectionChange,
+  onSelectedDevice,
   onCollapse,
   onInspect,
   onRevoke,
@@ -496,7 +497,7 @@ export default function ShareConfigDrawer({
   onOneTimeShare
 }: ShareConfigDrawerProps): React.JSX.Element {
   const [activeTab, setActiveTab] = useState('setting')
-  const [selectedIds, setSelectedIds] = useState(() => new Set(['08']))
+  const selectedIdSet = new Set(selectedIds)
   const [permissions, setPermissions] = useState<Permissions>({
     screenView: true,
     touchControl: true,
@@ -507,19 +508,18 @@ export default function ShareConfigDrawer({
   const [leaseTime, setLeaseTime] = useState('23:59')
 
   const toggleDevice = (id: string): void => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
+    const next = new Set(selectedIdSet)
+    const wasSelected = next.has(id)
+    wasSelected ? next.delete(id) : next.add(id)
+    onSelectionChange(Array.from(next))
+    if (!wasSelected) onSelectedDevice?.(id)
   }
 
   const selectAllDevices = (): void => {
-    setSelectedIds((prev) => {
-      const availableIds = deviceGrid.filter((d) => d.status !== 'rented').map((d) => d.id)
-      const allSelected = availableIds.every((id) => prev.has(id))
-      return allSelected ? new Set() : new Set(availableIds)
-    })
+    const availableIds = deviceGrid.filter((d) => d.status !== 'rented').map((d) => d.id)
+    const allSelected = availableIds.every((id) => selectedIdSet.has(id))
+    onSelectionChange(allSelected ? [] : availableIds)
+    if (!allSelected && availableIds[0]) onSelectedDevice?.(availableIds[0])
   }
 
   const togglePermission = (key: PermissionKey): void => {
@@ -570,7 +570,7 @@ export default function ShareConfigDrawer({
         {activeTab === 'setting' ? (
           <SettingTab
             devices={deviceGrid}
-            selectedIds={selectedIds}
+            selectedIds={selectedIdSet}
             onToggleDevice={toggleDevice}
             onSelectAll={selectAllDevices}
             permissions={permissions}

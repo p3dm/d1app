@@ -4,7 +4,7 @@ import ConfirmEmail from './components/ConfirmEmail'
 import ForgotPassword from './components/ForgotPassword'
 import ResetPassword from './components/ResetPassword'
 import ControlCenter from './ControlCenter'
-import PhoneShared from './PhoneShared'
+import PhoneShared, { type SharedPhone } from './PhoneShared'
 import AppLayout from './layout/AppLayout'
 import { useAuth } from './auth/AuthContext'
 import React, { useState, useCallback } from 'react'
@@ -16,6 +16,16 @@ function App(): React.JSX.Element {
   const [pendingEmail, setPendingEmail] = useState('')
   const [confirmError] = useState('')
   const [activeId, setActiveId] = useState('control-center')
+  const [sharedPhones, setSharedPhones] = useState<SharedPhone[]>([])
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null)
+
+  const handleSelectedDevice = useCallback((deviceId: string): void => {
+    setSelectedDeviceId(deviceId || null)
+    if (!deviceId) return
+
+    setSelectedIds((previous) => (previous.includes(deviceId) ? previous : [...previous, deviceId]))
+  }, [])
 
   const handleAuthenticated = useCallback(
     (user: unknown) => {
@@ -70,8 +80,24 @@ function App(): React.JSX.Element {
     //   return <CompleteProfile onComplete={(nextUser) => setAuthenticated(nextUser)} />
     // }
     return (
-      <AppLayout activeId={activeId} onNavigate={setActiveId}>
-        {activeId === 'phone-shared' ? <PhoneShared phones={[]} /> : <ControlCenter />}
+      <AppLayout
+        activeId={activeId}
+        onNavigate={setActiveId}
+        sharedPhones={sharedPhones}
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        onSelectedDevice={handleSelectedDevice}
+      >
+        {activeId === 'phone-shared' ? (
+          <PhoneShared
+            phones={sharedPhones}
+            onPhonesChange={setSharedPhones}
+            selectedDeviceId={selectedDeviceId}
+            onSelectedDevice={handleSelectedDevice}
+          />
+        ) : (
+          <ControlCenter />
+        )}
       </AppLayout>
     )
   }

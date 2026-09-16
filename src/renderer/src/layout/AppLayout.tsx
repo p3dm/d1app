@@ -5,10 +5,15 @@ import Sidebar from '../components/SideNav'
 import Footer from '@renderer/components/Footer'
 import PhoneControl from '../components/PhoneControl'
 import SharedConfig from '@renderer/components/SharedConfig'
+import type { SharedPhone } from '../PhoneShared'
 
 interface AppLayoutProps {
   activeId?: string
   onNavigate?: (id: string) => void
+  sharedPhones: SharedPhone[]
+  selectedIds: string[]
+  onSelectionChange: (ids: string[]) => void
+  onSelectedDevice: (deviceId: string) => void
   children: React.ReactNode
 }
 
@@ -20,6 +25,10 @@ interface LayoutUser {
 export default function AppLayout({
   activeId = 'control-center',
   onNavigate,
+  sharedPhones,
+  selectedIds,
+  onSelectionChange,
+  onSelectedDevice,
   children
 }: AppLayoutProps): React.JSX.Element {
   const { user } = useAuth()
@@ -65,7 +74,17 @@ export default function AppLayout({
         <main className="dashboard-content">{children}</main>
 
         {selectedId === 'control-center' || selectedId === 'phone-cloud' ? <PhoneControl /> : null}
-        {selectedId === 'phone-shared' ? <SharedConfig /> : null}
+        {selectedId === 'phone-shared' ? (
+          <SharedConfig
+            selectedIds={selectedIds}
+            onSelectionChange={onSelectionChange}
+            onSelectedDevice={onSelectedDevice}
+            deviceGrid={sharedPhones.map((phone) => ({
+              id: phone.serial,
+              status: 'available'
+            }))}
+          />
+        ) : null}
       </div>
 
       <Footer />
