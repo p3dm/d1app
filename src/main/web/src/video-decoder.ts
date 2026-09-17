@@ -5,6 +5,8 @@ import {
   type VideoMetaMessage
 } from '../../shared/protocol'
 
+const MAX_DECODE_QUEUE_SIZE = 3
+
 export class RemoteVideoDecoder {
   readonly #label: string
   readonly #canvas: HTMLCanvasElement
@@ -73,7 +75,7 @@ export class RemoteVideoDecoder {
       }
       return false
     }
-    if (this.#decoder.decodeQueueSize > 1 && this.#configuration) {
+    if (this.#decoder.decodeQueueSize > MAX_DECODE_QUEUE_SIZE && this.#configuration) {
       // Never play an old remote-screen queue. Resume at the next frequent
       // keyframe instead of accumulating seconds of input lag.
       this.#decoder.reset()
@@ -108,6 +110,7 @@ export class RemoteVideoDecoder {
         this.#canvas.width = frame.displayWidth
         this.#canvas.height = frame.displayHeight
       }
+      this.#context.clearRect(0, 0, this.#canvas.width, this.#canvas.height)
       this.#context.drawImage(frame, 0, 0, this.#canvas.width, this.#canvas.height)
       if (!this.#firstFrameRendered) {
         this.#firstFrameRendered = true

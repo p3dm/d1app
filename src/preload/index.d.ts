@@ -33,6 +33,8 @@ interface Api {
       sessionId: string
       secret: string
     }>
+    writeLog: (text: string) => void
+    openLogs: () => Promise<boolean>
     stopViewer: () => Promise<boolean>
     onHostLog: (callback: (text: string) => void) => () => void
   }

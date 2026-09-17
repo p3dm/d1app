@@ -96,6 +96,12 @@ type PendingFrame = {
 
 export class RtcVideoFrameAssembler {
   readonly #frames = new Map<number, PendingFrame>()
+  #newestFrameId?: number
+  #lastCompletedFrameId?: number
+
+  get lastCompletedFrameId(): number | undefined {
+    return this.#lastCompletedFrameId
+  }
 
   push(input: ArrayBuffer | Uint8Array): Uint8Array | undefined {
     const bytes = input instanceof Uint8Array ? input : new Uint8Array(input)
@@ -114,6 +120,22 @@ export class RtcVideoFrameAssembler {
       frameBytes > RTC_MAX_VIDEO_FRAME_BYTES
     )
       return undefined
+
+    if (
+      this.#newestFrameId !== undefined &&
+      frameId !== this.#newestFrameId &&
+      !isNewerFrameId(frameId, this.#newestFrameId)
+    ) {
+      // Video chunks arrive unordered; never resurrect an older screen frame
+      // after a newer frame has started or completed.
+      return undefined
+    }
+    if (frameId !== this.#newestFrameId) {
+      this.#newestFrameId = frameId
+      for (const pendingFrameId of this.#frames.keys()) {
+        if (pendingFrameId !== frameId) this.#frames.delete(pendingFrameId)
+      }
+    }
 
     this.#prune()
     let pending = this.#frames.get(frameId)
@@ -144,11 +166,15 @@ export class RtcVideoFrameAssembler {
       frame.set(chunk, offset)
       offset += chunk.byteLength
     }
-    return offset === frame.byteLength ? frame : undefined
+    if (offset !== frame.byteLength) return undefined
+    this.#lastCompletedFrameId = frameId
+    return frame
   }
 
   clear(): void {
     this.#frames.clear()
+    this.#newestFrameId = undefined
+    this.#lastCompletedFrameId = undefined
   }
 
   #prune(): void {
@@ -157,4 +183,9 @@ export class RtcVideoFrameAssembler {
       if (frame.createdAt < expiresBefore || this.#frames.size > 8) this.#frames.delete(frameId)
     }
   }
+}
+
+function isNewerFrameId(candidate: number, reference: number): boolean {
+  const distance = (candidate - reference) >>> 0
+  return distance !== 0 && distance < 0x8000_0000
 }

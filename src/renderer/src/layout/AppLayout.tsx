@@ -74,7 +74,7 @@ export default function AppLayout({
         <main className="dashboard-content">{children}</main>
 
         {selectedId === 'control-center' || selectedId === 'phone-cloud' ? <PhoneControl /> : null}
-        {selectedId === 'phone-shared' ? (
+        {/* {selectedId === 'phone-shared' ? (
           <SharedConfig
             selectedIds={selectedIds}
             onSelectionChange={onSelectionChange}
@@ -84,7 +84,7 @@ export default function AppLayout({
               status: 'available'
             }))}
           />
-        ) : null}
+        ): null} */}
       </div>
 
       <Footer />

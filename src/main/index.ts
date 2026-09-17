@@ -13,6 +13,8 @@ let pendingAuthCode: { eventName: string; code: string } | null = null
 let hostProcess: ReturnType<typeof spawn> | null = null
 let viewerNatProcess: ReturnType<typeof spawn> | null = null
 let viewerNatReady: Promise<boolean> | undefined
+let logWindow: BrowserWindow | null = null
+const logHistory: string[] = []
 const HOST_UDP_PORT = 49000
 const VIEWER_UDP_PORT = 49001
 
@@ -102,7 +104,7 @@ function startHost(input: { rendezvousUrl?: string; stunUrl?: string } = {}): {
 } {
   stopHost()
   const runtimeLabel = `Electron ${process.versions.electron} / Chromium ${process.versions.chrome}`
-  mainWindow?.webContents.send('host:log', `[RUNTIME] ${runtimeLabel}\n`)
+  broadcastHostLog(`[RUNTIME] ${runtimeLabel}\n`)
 
   const rendezvousUrl = validUrl(input.rendezvousUrl, ['ws:', 'wss:'])
   const stunUrls = validStunUrls(input.stunUrl ?? '')
@@ -142,7 +144,7 @@ function startHost(input: { rendezvousUrl?: string; stunUrl?: string } = {}): {
   forwardHostLog(hostProcess.stdout)
   forwardHostLog(hostProcess.stderr)
   hostProcess.once('exit', (code) => {
-    mainWindow?.webContents.send('host:log', `[HOST] stopped (${code ?? 'unknown'})\n`)
+    broadcastHostLog(`[HOST] stopped (${code ?? 'unknown'})\n`)
     hostProcess = null
   })
 
@@ -166,10 +168,7 @@ async function openViewer(encodedInvite: string): Promise<{
 }> {
   const invite = parseInvite(encodedInvite)
   void startViewerNatMapping().catch((error: Error) => {
-    mainWindow?.webContents.send(
-      'host:log',
-      `[VIEWER NAT] optional helper unavailable: ${error.message}\n`
-    )
+    broadcastHostLog(`[VIEWER NAT] optional helper unavailable: ${error.message}\n`)
   })
   return {
     rendezvousUrl: invite.rendezvousUrl,
@@ -208,7 +207,7 @@ function startViewerNatMapping(): Promise<boolean> {
     const onData = (chunk: Buffer | string): void => {
       const text = chunk.toString()
       output = (output + text).slice(-8192)
-      mainWindow?.webContents.send('host:log', `[VIEWER NAT] ${text}`)
+      broadcastHostLog(`[VIEWER NAT] ${text}`)
       if (output.includes(`viewer UDP ${VIEWER_UDP_PORT} mapping helper ready`)) {
         finish(true)
       }
@@ -243,9 +242,52 @@ function forwardHostLog(
 ): void {
   stream?.on('data', (chunk) => {
     const text = chunk.toString()
-    mainWindow?.webContents.send('host:log', text)
+    broadcastHostLog(text)
     if (logToConsole) process.stdout.write(text)
   })
+}
+
+function broadcastHostLog(text: string): void {
+  logHistory.push(text)
+  if (logHistory.length > 2_000) logHistory.splice(0, logHistory.length - 2_000)
+  mainWindow?.webContents.send('host:log', text)
+  if (!app.isPackaged) process.stdout.write(text)
+  if (!logWindow || logWindow.isDestroyed()) return
+  const encoded = JSON.stringify(text)
+  void logWindow.webContents.executeJavaScript(`window.appendLog(${encoded})`).catch(() => undefined)
+}
+
+function openLogWindow(): void {
+  if (logWindow && !logWindow.isDestroyed()) {
+    logWindow.show()
+    logWindow.focus()
+    return
+  }
+
+  logWindow = new BrowserWindow({
+    width: 980,
+    height: 620,
+    minWidth: 560,
+    minHeight: 320,
+    title: 'D1A connection logs',
+    backgroundColor: '#080b09',
+    webPreferences: { contextIsolation: true, nodeIntegration: false }
+  })
+  logWindow.removeMenu()
+  logWindow.on('closed', () => {
+    logWindow = null
+  })
+  logWindow.webContents.once('did-finish-load', () => {
+    for (const text of logHistory) {
+      const encoded = JSON.stringify(text)
+      void logWindow?.webContents.executeJavaScript(`window.appendLog(${encoded})`)
+    }
+  })
+  const html = `<!doctype html><meta charset="utf-8"><title>D1A logs</title>
+<style>html,body{margin:0;height:100%;background:#080b09;color:#d7e8dc;font:12px Consolas,monospace}header{height:40px;display:flex;align-items:center;padding:0 14px;box-sizing:border-box;color:#00e599;border-bottom:1px solid #1c3a2a}pre{margin:0;padding:12px;height:calc(100% - 40px);box-sizing:border-box;overflow:auto;white-space:pre-wrap;word-break:break-word}button{margin-left:auto;background:#10251a;color:#00e599;border:1px solid #2b704d;padding:5px 10px;cursor:pointer}</style>
+<header>LIVE CONNECTION LOG<button onclick="out.textContent=''">Clear</button></header><pre id="out"></pre>
+<script>const out=document.getElementById('out');window.appendLog=(text)=>{out.append(document.createTextNode(text));out.scrollTop=out.scrollHeight}</script>`
+  void logWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
 }
 
 function validUrl(raw: string | undefined, protocols: string[]): string {
@@ -373,6 +415,13 @@ app.whenReady().then(() => {
   ipcMain.handle('remote-share:startHost', (_event, input) => startHost(input))
   ipcMain.handle('remote-share:stopHost', () => stopHost())
   ipcMain.handle('remote-share:openViewer', (_event, invite) => openViewer(invite))
+  ipcMain.on('remote-share:log', (_event, text: unknown) => {
+    if (typeof text === 'string' && text.length > 0) broadcastHostLog(`[VIEWER] ${text}\n`)
+  })
+  ipcMain.handle('remote-share:openLogs', () => {
+    openLogWindow()
+    return true
+  })
   ipcMain.handle('remote-share:stopViewer', () => {
     stopViewerNatMapping()
     return true

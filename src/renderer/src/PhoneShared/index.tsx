@@ -64,7 +64,7 @@ function PhoneShared({
             setStatus(`${serials.length} phone đã kết nối tới Host`)
           },
           status: (text) => setStatus(text),
-          log: () => undefined
+          log: (text) => window.api.remoteShare.writeLog(text)
         },
         {
           url: connection.rendezvousUrl,
@@ -118,6 +118,8 @@ function PhoneShared({
       selectedDeviceId={selectedDeviceId}
       onSelectDevice={(deviceId) => {
         onSelectedDevice(deviceId)
+        // Mark the device before React replaces the grid endpoint with the focus endpoint.
+        // This keeps unregisterDevice from unsubscribing and closing its WebRTC channels.
         rtcClient.selectDevice(deviceId)
       }}
       onCloseFocused={() => {

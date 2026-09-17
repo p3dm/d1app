@@ -43,6 +43,8 @@ const api = {
       ipcRenderer.invoke('remote-share:startHost', settings),
     stopHost: () => ipcRenderer.invoke('remote-share:stopHost'),
     openViewer: (invite: string) => ipcRenderer.invoke('remote-share:openViewer', invite),
+    writeLog: (text: string) => ipcRenderer.send('remote-share:log', text),
+    openLogs: () => ipcRenderer.invoke('remote-share:openLogs'),
     stopViewer: () => ipcRenderer.invoke('remote-share:stopViewer'),
     onHostLog: (callback: (text: string) => void) => {
       const listener = (_event: Electron.IpcRendererEvent, text: string) => callback(text)

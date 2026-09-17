@@ -13,8 +13,22 @@ export class RemoteController {
     canvas.addEventListener('pointermove', this.#onPointer)
     canvas.addEventListener('pointerup', this.#onPointer)
     canvas.addEventListener('pointercancel', this.#onPointer)
-    canvas.addEventListener('contextmenu', (event) => event.preventDefault())
+    canvas.addEventListener('contextmenu', this.#onContextMenu)
   }
+
+  dispose(): void {
+    this.canvas.removeEventListener('pointerdown', this.#onPointer)
+    this.canvas.removeEventListener('pointermove', this.#onPointer)
+    this.canvas.removeEventListener('pointerup', this.#onPointer)
+    this.canvas.removeEventListener('pointercancel', this.#onPointer)
+    this.canvas.removeEventListener('contextmenu', this.#onContextMenu)
+    if (this.#moveFrame !== undefined) cancelAnimationFrame(this.#moveFrame)
+    this.#moveFrame = undefined
+    this.#pendingMove = undefined
+    this.#activePointers.clear()
+  }
+
+  readonly #onContextMenu = (event: Event): void => event.preventDefault()
 
   readonly #onPointer = (event: PointerEvent): void => {
     event.preventDefault()

@@ -1893,6 +1893,23 @@ code {
   font-weight: 500;
 }
 
+.app-header-log-button {
+  padding: 4px 7px;
+  color: #00e599;
+  background: rgb(0 229 153 / 8%);
+  border: 1px solid rgb(0 229 153 / 30%);
+  border-radius: 4px;
+  font-family: var(--co-font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.app-header-log-button:hover {
+  background: rgb(0 229 153 / 16%);
+  border-color: rgb(0 229 153 / 60%);
+}
+
 .app-header-divider {
   width: 1px;
   height: 16px;

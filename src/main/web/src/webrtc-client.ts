@@ -109,6 +109,7 @@ export class WebRtcClient {
   }
 
   selectDevice(serial: string): void {
+    if (this.#selectedSerial === serial) return
     if (this.#selectedSerial && this.#selectedSerial !== serial) {
       this.#endpoints.get(this.#selectedSerial)?.setFocusStream(undefined)
     }

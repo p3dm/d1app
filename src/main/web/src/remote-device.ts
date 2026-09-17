@@ -19,6 +19,8 @@ export class RemoteDevice implements WebSocketDeviceEndpoint, WebRtcDeviceEndpoi
   readonly #canvas: HTMLCanvasElement
   readonly #decoder: RemoteVideoDecoder
   readonly #focusVideo: HTMLVideoElement
+  readonly #controllers: RemoteController[]
+  readonly #channelCleanups = new Map<RtcDeviceChannelKind, () => void>()
   readonly #sendControl: (message: ControlMessage) => void
   #disconnectNotified = false
   readonly #receivedChunks: Record<'key' | 'video', number> = { key: 0, video: 0 }
@@ -30,6 +32,7 @@ export class RemoteDevice implements WebSocketDeviceEndpoint, WebRtcDeviceEndpoi
   #waitingForKeyframe = false
   #keyframeRequestAttempt = 0
   #keyframeRecoveryTimer?: number
+  #lastRtcFrameId?: number
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -43,8 +46,10 @@ export class RemoteDevice implements WebSocketDeviceEndpoint, WebRtcDeviceEndpoi
     this.#focusVideo = focusVideo
     const label = canvas.getAttribute('aria-label')?.replace(/^Màn hình Android /, '') ?? 'unknown'
     this.#decoder = new RemoteVideoDecoder(label, canvas, callbacks.streaming)
-    new RemoteController(canvas, (message) => this.send(message))
-    new RemoteController(focusVideo, (message) => this.send(message))
+    this.#controllers = [
+      new RemoteController(canvas, (message) => this.send(message)),
+      new RemoteController(focusVideo, (message) => this.send(message))
+    ]
   }
 
   handleServerMessage(message: ServerMessage): void {
@@ -75,14 +80,15 @@ export class RemoteDevice implements WebSocketDeviceEndpoint, WebRtcDeviceEndpoi
   }
 
   attachChannel(kind: RtcDeviceChannelKind, channel: RTCDataChannel): void {
+    this.#channelCleanups.get(kind)?.()
     channel.binaryType = 'arraybuffer'
     this.#callbacks.log(
       `[RTC] channel=${kind} attached state=${channel.readyState} ordered=${channel.ordered} ` +
         `maxLifetime=${channel.maxPacketLifeTime ?? 'none'}`
     )
-    channel.addEventListener('open', () => this.#callbacks.log(`[RTC] channel=${kind} open`))
-    channel.addEventListener('error', () => this.#callbacks.log(`[RTC] channel=${kind} error`))
-    channel.addEventListener('message', (event) => {
+    const onOpen = (): void => this.#callbacks.log(`[RTC] channel=${kind} open`)
+    const onError = (): void => this.#callbacks.log(`[RTC] channel=${kind} error`)
+    const onMessage = (event: MessageEvent): void => {
       if (kind === 'control') {
         if (typeof event.data !== 'string') return
         try {
@@ -99,6 +105,9 @@ export class RemoteDevice implements WebSocketDeviceEndpoint, WebRtcDeviceEndpoi
       }
       const frame = this.#rtcAssemblers[kind].push(event.data)
       if (frame) {
+        const frameId = this.#rtcAssemblers[kind].lastCompletedFrameId
+        if (frameId === undefined || !isNewerFrameId(frameId, this.#lastRtcFrameId)) return
+        this.#lastRtcFrameId = frameId
         this.#assembledFrames[kind] += 1
         if (this.#assembledFrames[kind] === 1) {
           this.#callbacks.log(
@@ -107,15 +116,27 @@ export class RemoteDevice implements WebSocketDeviceEndpoint, WebRtcDeviceEndpoi
         }
         this.handleVideo(frame)
       }
-    })
-    channel.addEventListener('close', () => {
+    }
+    const onClose = (): void => {
       if (kind !== 'control') this.#rtcAssemblers[kind].clear()
       const summary =
         kind === 'control'
           ? ''
           : ` chunks=${this.#receivedChunks[kind]} frames=${this.#assembledFrames[kind]}`
       this.#callbacks.log(`[RTC] channel=${kind} closed${summary}`)
+    }
+    channel.addEventListener('open', onOpen)
+    channel.addEventListener('error', onError)
+    channel.addEventListener('message', onMessage)
+    channel.addEventListener('close', onClose)
+    this.#channelCleanups.set(kind, () => {
+      channel.removeEventListener('open', onOpen)
+      channel.removeEventListener('error', onError)
+      channel.removeEventListener('message', onMessage)
+      channel.removeEventListener('close', onClose)
+      if (this.#channelCleanups.get(kind) === cleanup) this.#channelCleanups.delete(kind)
     })
+    const cleanup = this.#channelCleanups.get(kind)!
   }
 
   send(message: ControlMessage): void {
@@ -136,6 +157,7 @@ export class RemoteDevice implements WebSocketDeviceEndpoint, WebRtcDeviceEndpoi
     )
     this.#rtcAssemblers.key.clear()
     this.#rtcAssemblers.video.clear()
+    this.#lastRtcFrameId = undefined
     this.#receivedChunks.key = 0
     this.#receivedChunks.video = 0
     this.#assembledFrames.key = 0
@@ -149,6 +171,9 @@ export class RemoteDevice implements WebSocketDeviceEndpoint, WebRtcDeviceEndpoi
   disconnect(): void {
     this.#stopKeyframeRecovery()
     this.#decoder.close()
+    for (const cleanup of this.#channelCleanups.values()) cleanup()
+    this.#channelCleanups.clear()
+    for (const controller of this.#controllers) controller.dispose()
     this.setFocusStream(undefined)
   }
 
@@ -209,4 +234,10 @@ export class RemoteDevice implements WebSocketDeviceEndpoint, WebRtcDeviceEndpoi
       hash = (hash * 31 + label.charCodeAt(index)) >>> 0
     return hash
   }
+}
+
+function isNewerFrameId(candidate: number, reference: number | undefined): boolean {
+  if (reference === undefined) return true
+  const distance = (candidate - reference) >>> 0
+  return distance !== 0 && distance < 0x8000_0000
 }

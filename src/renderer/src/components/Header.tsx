@@ -83,6 +83,14 @@ export default function Header({
           />
           <span className="app-header-device-count">{deviceCount} Devices Connected</span>
         </div>
+        <button
+          type="button"
+          className="app-header-log-button"
+          title="Open live connection logs"
+          onClick={() => void window.api.remoteShare.openLogs()}
+        >
+          LOG
+        </button>
         <div className="app-header-divider" />
         <div className="app-header-slot">{rightSlot}</div>
         <div className="app-header-account">
