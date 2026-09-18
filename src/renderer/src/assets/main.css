@@ -126,10 +126,8 @@ code {
 .remote-share-control {
   display: flex;
   flex-direction: column;
-
   width: 100%;
   height: 100%;
-
   min-height: 0;
   overflow: hidden;
 }
@@ -1004,7 +1002,6 @@ code {
   display: flex;
   flex: 0 0 240px;
   flex-direction: column;
-  width: 240px;
   height: 100%;
   min-height: 0;
   background: #0d1013;
@@ -1014,13 +1011,26 @@ code {
   font-size: 12px;
   user-select: none;
   z-index: 20;
+  transition:
+    flex-basis 200ms ease,
+    width 200ms ease;
+}
+
+.phone-control-panel-collapsed {
+  flex-basis: 56px;
+  width: 56px;
+}
+
+.phone-control-header-collapsed {
+  justify-content: center;
 }
 
 .phone-control-header {
   display: flex;
   flex: 0 0 40px;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 12px;
   padding: 0 12px;
   background: rgb(255 255 255 / 2%);
   border-bottom: 1px solid rgb(255 255 255 / 10%);
@@ -1059,7 +1069,7 @@ code {
   font-size: 9px;
 }
 
-.phone-control-collapse {
+.button-control-collapse {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
@@ -1085,6 +1095,11 @@ code {
   flex: 1;
   flex-direction: column;
   min-height: 0;
+  width: 320px;
+}
+
+.phone-control-collapsed {
+  flex-basis: 64px;
 }
 
 .phone-control-scroll {
@@ -1480,10 +1495,7 @@ code {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 10px;
-  border: 1px solid rgb(255 255 255 / 10%);
-  border-radius: 12px;
-  background: rgb(0 0 0 / 50%);
+  padding: 5px;
 }
 
 .settings-slider-list {
@@ -1560,22 +1572,25 @@ code {
 .settings-filter-panel {
   display: flex;
   justify-content: center;
+  padding-top: 8px;
+  border-top: 1px solid rgb(255 255 255 / 10%);
+  border-bottom: 1px solid rgb(255 255 255 / 10%);
 }
 
 .settings-filter-bar {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  padding: 5px;
 }
 
 .settings-filter-button {
   padding: 5px 8px;
-  border: 1px solid rgb(255 255 255 / 10%);
-  border-radius: 999px;
-  background: rgb(255 255 255 / 4%);
+  background: transparent;
   color: #a1a1aa;
   font-size: 9px;
   font-weight: 600;
+  border-bottom: 2px solid rgb(255 255 255 / 15%);
   transition:
     border-color 160ms ease,
     background 160ms ease,
@@ -3227,6 +3242,164 @@ main {
   white-space: nowrap;
 }
 
+/* Grid tiles keep the WebRTC surface and its metadata within one phone frame. */
+.webrtc-device-tile,
+.phone-card-tile {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 6px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.phone-device-info {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  min-height: 38px;
+  color: #a1a1aa;
+  font-family: var(--co-font-mono);
+}
+
+.phone-device-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 5px;
+  border: 1px solid rgb(239 68 68 / 30%);
+  border-radius: 4px;
+  background: rgb(239 68 68 / 20%);
+  color: #f87171;
+  font-size: 7px;
+  font-weight: 700;
+}
+
+.phone-device-tag-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #f87171;
+  animation: app-footer-pulse 2s ease-in-out infinite;
+}
+
+.phone-device-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 0;
+  line-height: 1.15;
+  text-align: right;
+}
+
+.phone-device-details strong {
+  color: #fff;
+  font-size: 15px;
+  letter-spacing: 0.05em;
+}
+
+.phone-device-details span {
+  color: #d4d4d8;
+  font-family: var(--co-font-body);
+  font-size: 9px;
+}
+
+.phone-device-details small {
+  color: #71717a;
+  font-size: 8px;
+}
+
+.phone-device-info-selected .phone-device-tag {
+  border-color: transparent;
+  background: #fff;
+  color: #09090b;
+}
+
+.phone-device-info-selected .phone-device-tag-dot {
+  background: #ef4444;
+}
+
+.phone-device-info-selected .phone-device-details strong,
+.phone-device-info-selected .phone-device-details small {
+  color: #00e599;
+}
+
+.webrtc-device-phone {
+  position: relative;
+  aspect-ratio: 9 / 19;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid #18181b;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 40%);
+}
+
+.webrtc-device-phone-selected {
+  border: 2px solid #00e599;
+  box-shadow: 0 0 20px rgb(0 229 153 / 30%);
+}
+
+.webrtc-device-phone .device-stream {
+  width: 100%;
+  height: 100%;
+}
+
+.webrtc-device-info {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgb(0 0 0 / 55%),
+    transparent 28%,
+    transparent 68%,
+    rgb(0 0 0 / 65%)
+  );
+}
+
+.webrtc-device-info .phone-card-info {
+  margin-top: 0;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 90%);
+}
+
+.webrtc-device-phone .webrtc-device-selected-state {
+  height: 100%;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+}
+
+.webrtc-device-controlled-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  pointer-events: none;
+  background: rgb(0 0 0 / 46%);
+  color: #fff;
+  font-family: var(--co-font-mono);
+}
+
+.webrtc-device-controlled-state strong {
+  color: #00e599;
+  font-size: 10px;
+}
+
+.webrtc-device-controlled-state small {
+  color: #d4d4d8;
+  font-size: 8px;
+}
+
 .phone-card {
   position: relative;
   display: flex;
@@ -3251,6 +3424,7 @@ main {
 .phone-card-controlled {
   border: 2px solid #00e599;
   box-shadow: 0 0 20px rgb(0 229 153 / 25%);
+  border-radius: 8px;
 }
 
 .phone-card-controlled:hover {
@@ -3281,7 +3455,9 @@ main {
 }
 
 .phone-card-tag-controlled {
-  background: rgb(0 229 153 / 20%);
+  border-color: transparent;
+  background: #fff;
+  color: #09090b;
 }
 
 .phone-card-tag-dot {
@@ -3289,7 +3465,7 @@ main {
   height: 4px;
   flex: 0 0 auto;
   border-radius: 50%;
-  background: #00e599;
+  background: #f87171;
   animation: app-footer-pulse 2s ease-in-out infinite;
 }
 
@@ -3422,15 +3598,15 @@ main {
   height: 40px;
   margin-bottom: 8px;
   border: 1px solid rgb(0 229 153 / 40%);
-  border-radius: 50%;
-  background: rgb(0 229 153 / 15%);
+  border-radius: 8px;
+  background: #09090b;
   color: #00e599;
   box-shadow: 0 0 12px rgb(0 229 153 / 30%);
 }
 
 .phone-card-controlled-title {
   color: #fff;
-  font-family: var(--co-font-body);
+  font-family: var(--co-font-mono);
   font-size: 11px;
   font-weight: 600;
   line-height: 1.2;
@@ -3491,7 +3667,6 @@ main {
   flex: 1 1 auto;
   height: 100%;
   min-height: 0;
-  padding: 14px;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;

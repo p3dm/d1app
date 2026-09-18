@@ -36,7 +36,7 @@ const QUICK_ACTIONS = [
   { id: 'rotate', label: 'Rotate', icon: RefreshCw }
 ]
 
-const FILTERS = ['All', 'Cloud', 'USB', 'WIFI', 'OTG']
+const FILTERS = ['All', 'Cloud', 'USB', 'WIFI', 'OTG', 'Shared']
 
 const DEFAULT_GROUPS = [
   {
@@ -50,7 +50,13 @@ const DEFAULT_GROUPS = [
 ]
 
 /** Một ô nhập octet IP (192 / 168 / 1 / 255...) */
-function OctetInput({ value, onChange }) {
+function OctetInput({
+  value,
+  onChange
+}: {
+  value: string
+  onChange: (value: string) => void
+}): React.JSX.Element {
   return (
     <input
       type="text"
@@ -63,14 +69,35 @@ function OctetInput({ value, onChange }) {
   )
 }
 
+interface SettingsTabConentProps {
+  activeDeviceId: number
+  onSliderChange?: (key: string, value: number) => void
+  onQuickAction?: (actionId: string) => void
+  onAddGroup?: () => void
+  onSelectDevice?: (groupId: string, deviceId: number) => void
+  remoteInvite?: string
+  remoteStatus?: string
+  remoteConnected?: boolean
+  onRemoteInviteChange?: (value: string) => void
+  onRemoteConnect?: () => void
+  onRemoteToggle?: () => void
+  onRemoteDisconnect?: () => void
+}
+
 /** Nội dung tab Settings */
 function SettingsTabContent({
-  activeDeviceId = 8,
+  activeDeviceId,
   onSliderChange,
   onQuickAction,
   onAddGroup,
-  onSelectDevice
-}) {
+  onSelectDevice,
+  remoteInvite,
+  remoteStatus,
+  remoteConnected,
+  onRemoteInviteChange,
+  onRemoteConnect,
+  onRemoteDisconnect
+}: SettingsTabConentProps): React.JSX.Element {
   const contentRef = useRef<HTMLDivElement | null>(null)
   const [sliders, setSliders] = useState(DEFAULT_SLIDERS)
   const [filter, setFilter] = useState('Cloud')
@@ -135,6 +162,47 @@ function SettingsTabContent({
 
   return (
     <div ref={contentRef} className="settings-tab-content">
+      <div className="phone-control-card">
+        <div className="phone-control-section-header">
+          <span className="phone-control-section-title">
+            <span className="phone-control-section-mark">◆</span>
+            Shared phone network
+          </span>
+          <span
+            className={`phone-control-status-badge ${remoteConnected ? '' : 'phone-control-status-dot-offline'}`}
+          >
+            {remoteConnected ? 'Connected' : 'Disconnected'}
+          </span>
+        </div>
+        <textarea
+          className="phone-control-input"
+          value={remoteInvite}
+          onChange={(event) => onRemoteInviteChange?.(event.target.value)}
+          placeholder="Paste shared connection code"
+          spellCheck={false}
+          rows={4}
+          disabled={remoteConnected}
+        />
+        <div className="phone-control-grid-2">
+          {remoteConnected ? (
+            <button
+              onClick={onRemoteDisconnect}
+              className="phone-control-btn phone-control-btn-secondary"
+            >
+              Disconnect
+            </button>
+          ) : (
+            <button
+              onClick={onRemoteConnect}
+              disabled={!remoteInvite.trim()}
+              className="phone-control-btn phone-control-btn-primary"
+            >
+              Connect
+            </button>
+          )}
+        </div>
+        {remoteStatus ? <div className="remote-share-status">{remoteStatus}</div> : null}
+      </div>
       <div className="settings-top-panel">
         <div className="settings-slider-list">
           {sliders.map((slider) => (
@@ -278,9 +346,29 @@ function SettingsTabContent({
  * Toàn bộ state (tab, port, dải IP, danh sách mạng) được quản lý nội bộ nhưng có thể
  * override/điều khiển từ ngoài qua props nếu bạn muốn đồng bộ với backend thật.
  */
-export default function PhoneControl({
+interface OTGHubProps {
+  online?: boolean
+  defaultCollapsed?: boolean
+  onGuideClick?: () => void
+  savedNetworks?: Array<{ id: number; from: string; to: string; port: string }>
+  onAddRange?: (range: { port: string; from: string; to: string }) => void
+  onScanAll?: (options?: { all?: boolean; port?: string; from?: string; to?: string }) => void
+  onScanNetwork?: (network: { id: number; from: string; to: string; port: string }) => void
+  onSliderChange?: (key: string, value: number) => void
+  onQuickAction?: (actionId: string) => void
+  onAddGroup?: () => void
+  onSelectDevice?: (groupId: string, deviceId: number) => void
+  remoteInvite?: string
+  remoteStatus?: string
+  remoteConnected?: boolean
+  onRemoteInviteChange?: (value: string) => void
+  onRemoteConnect?: () => void
+  onRemoteDisconnect?: () => void
+}
+
+export default function OTGHub({
   online = true,
-  onCollapse,
+  defaultCollapsed = false,
   onGuideClick,
   savedNetworks = DEFAULT_SAVED_NETWORKS,
   onAddRange,
@@ -289,21 +377,28 @@ export default function PhoneControl({
   onSliderChange,
   onQuickAction,
   onAddGroup,
-  onSelectDevice
-}) {
+  onSelectDevice,
+  remoteInvite = '',
+  remoteStatus = '',
+  remoteConnected = false,
+  onRemoteInviteChange,
+  onRemoteConnect,
+  onRemoteDisconnect
+}: OTGHubProps): React.JSX.Element {
   const [activeTab, setActiveTab] = useState('otg-hub')
   const [port, setPort] = useState('5555')
   const [rangeFrom, setRangeFrom] = useState(['192', '168', '1', '1'])
   const [rangeTo, setRangeTo] = useState(['192', '168', '1', '255'])
   const [savedNetworksState, setSavedNetworksState] = useState(savedNetworks)
+  const [collapsed, setCollapsed] = useState(defaultCollapsed)
 
-  const updateOctet = (setter, arr, index, value) => {
+  const updateOctet = (setter, arr, index, value): void => {
     const next = [...arr]
     next[index] = value
     setter(next)
   }
 
-  const handleAdd = () => {
+  const handleAdd = (): void => {
     onAddRange?.({
       port,
       from: rangeFrom.join('.'),
@@ -311,188 +406,209 @@ export default function PhoneControl({
     })
   }
 
-  const handleDeleteNetwork = (id) => {
+  const handleDeleteNetwork = (id): void => {
     setSavedNetworksState((prev) => prev.filter((net) => net.id !== id))
   }
 
   return (
-    <aside className="phone-control-panel" data-purpose="right-control-panel">
-      {/* Tabs + nút collapse */}
-      <div className="phone-control-header">
-        <div className="phone-control-tabs">
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.id
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`phone-control-tab ${isActive ? 'phone-control-tab-active' : ''}`}
-              >
-                {isActive && <span className="phone-control-tab-marker">◆</span>}
-                {tab.label}
-              </button>
-            )
-          })}
-        </div>
-        <button onClick={onCollapse} title="Collapse" className="phone-control-collapse">
-          <span className="phone-control-collapse-text">&gt;&gt;</span>
+    <aside
+      className={`phone-control-panel ${collapsed ? 'phone-control-panel-collapsed' : ''}`}
+      data-purpose="right-control-panel"
+    >
+      {/* Header luôn hiển thị — chỉ đổi bố cục bên trong khi collapsed */}
+      <div className={`phone-control-header ${collapsed ? 'phone-control-header-collapsed' : ''}`}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setCollapsed((c) => !c)
+          }}
+          title={collapsed ? 'Expand' : 'Collapse'}
+          className="button-control-collapse"
+        >
+          <span className="phone-control-collapse-text">{collapsed ? '<<' : '>>'}</span>
         </button>
-      </div>
-
-      <div className="phone-control-body">
-        <div className="phone-control-scroll">
-          {activeTab === 'settings' ? (
-            <SettingsTabContent
-              activeDeviceId={8}
-              onSliderChange={onSliderChange}
-              onQuickAction={onQuickAction}
-              onAddGroup={onAddGroup}
-              onSelectDevice={onSelectDevice}
-            />
-          ) : (
-            <>
-              <div className="phone-control-guide">
-                <button onClick={onGuideClick} className="phone-control-guide-link">
-                  <FileText className="phone-control-icon" />
-                  Guide to connect
+        {!collapsed && (
+          <div className="phone-control-tabs">
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`phone-control-tab ${isActive ? 'phone-control-tab-active' : ''}`}
+                >
+                  {isActive && <span className="phone-control-tab-marker">◆</span>}
+                  {tab.label}
                 </button>
-                <div className="phone-control-status-badge">
-                  <span
-                    className={`phone-control-status-dot ${
-                      online
-                        ? 'phone-control-status-dot-online'
-                        : 'phone-control-status-dot-offline'
-                    }`}
-                  />
-                  {online ? 'Online' : 'Offline'}
-                </div>
-              </div>
-
-              <div className="phone-control-card">
-                <div className="phone-control-section-header">
-                  <span className="phone-control-section-title">
-                    <span className="phone-control-section-mark">◆</span>
-                    Set port
-                  </span>
-                  <div className="phone-control-inline-badges">
-                    <span className="phone-control-badge phone-control-badge-muted">
-                      <Shuffle className="phone-control-icon-small" />0
-                    </span>
-                    <span className="phone-control-badge phone-control-badge-active">Active</span>
-                  </div>
-                </div>
-
-                <div className="phone-control-input-wrap">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={port}
-                    onChange={(e) => setPort(e.target.value.replace(/[^0-9]/g, ''))}
-                    className="phone-control-input"
-                  />
-                  <button
-                    onClick={() => setPort(String(Math.floor(1024 + Math.random() * 60000)))}
-                    title="Random port"
-                    className="phone-control-random-port"
-                  >
-                    <Shuffle className="phone-control-icon" />
-                  </button>
-                </div>
-
-                <div className="phone-control-range-group">
-                  <div className="phone-control-range-label">IP Range</div>
-                  <div className="phone-control-grid-4">
-                    {rangeFrom.map((val, i) => (
-                      <OctetInput
-                        key={`from-${i}`}
-                        value={val}
-                        onChange={(v) => updateOctet(setRangeFrom, rangeFrom, i, v)}
-                      />
-                    ))}
-                  </div>
-                  <div className="phone-control-grid-4">
-                    {rangeTo.map((val, i) => (
-                      <OctetInput
-                        key={`to-${i}`}
-                        value={val}
-                        onChange={(v) => updateOctet(setRangeTo, rangeTo, i, v)}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="phone-control-grid-2">
-                  <button
-                    onClick={handleAdd}
-                    className="phone-control-btn phone-control-btn-secondary"
-                  >
-                    <Plus
-                      className="phone-control-icon-small phone-control-icon-accent"
-                      strokeWidth={3}
-                    />
-                    Add
-                  </button>
-                  <button
-                    onClick={() =>
-                      onScanAll?.({ port, from: rangeFrom.join('.'), to: rangeTo.join('.') })
-                    }
-                    className="phone-control-btn phone-control-btn-primary"
-                  >
-                    <RefreshCw className="phone-control-icon-small" />
-                    Scan
-                  </button>
-                </div>
-              </div>
-
-              <div className="phone-control-saved-wrap">
-                <div className="phone-control-saved-header">
-                  <span className="phone-control-section-title">
-                    <span className="phone-control-section-mark">◆</span>
-                    Saved networks
-                  </span>
-                  <button
-                    onClick={() => onScanAll?.({ all: true })}
-                    className="phone-control-scan-small"
-                  >
-                    <RefreshCw className="phone-control-icon-small phone-control-icon-accent" />
-                    Scan
-                  </button>
-                </div>
-
-                <div className="phone-control-saved-list">
-                  {savedNetworksState.map((net) => (
-                    <div key={net.id} className="phone-control-saved-item">
-                      <div className="phone-control-network-header">
-                        <span className="phone-control-network-id">{net.id}</span>
-                        <button
-                          onClick={() => onScanNetwork?.(net)}
-                          className="phone-control-network-scan"
-                        >
-                          <Search className="phone-control-icon-small" />
-                          Scan
-                        </button>
-                        <button
-                          onClick={() => handleDeleteNetwork(net.id)}
-                          className="phone-control-network-delete"
-                        >
-                          ×
-                        </button>
-                      </div>
-                      <div className="phone-control-network-range">
-                        {net.from} - {net.to}
-                      </div>
-                      <div className="phone-control-network-port">
-                        <span>Port</span>
-                        <span className="phone-control-network-port-value">{net.port}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+              )
+            })}
+          </div>
+        )}
       </div>
+
+      {/* Body chỉ render khi mở rộng */}
+      {!collapsed && (
+        <div className="phone-control-body">
+          <div className="phone-control-scroll">
+            {activeTab === 'settings' ? (
+              <SettingsTabContent
+                activeDeviceId={8}
+                onSliderChange={onSliderChange}
+                onQuickAction={onQuickAction}
+                onAddGroup={onAddGroup}
+                onSelectDevice={onSelectDevice}
+                remoteInvite={remoteInvite}
+                remoteStatus={remoteStatus}
+                remoteConnected={remoteConnected}
+                onRemoteInviteChange={onRemoteInviteChange}
+                onRemoteConnect={onRemoteConnect}
+                onRemoteDisconnect={onRemoteDisconnect}
+              />
+            ) : (
+              <>
+                <div className="phone-control-guide">
+                  <button onClick={onGuideClick} className="phone-control-guide-link">
+                    <FileText className="phone-control-icon" />
+                    Guide to connect
+                  </button>
+                  <div className="phone-control-status-badge">
+                    <span
+                      className={`phone-control-status-dot ${
+                        online
+                          ? 'phone-control-status-dot-online'
+                          : 'phone-control-status-dot-offline'
+                      }`}
+                    />
+                    {online ? 'Online' : 'Offline'}
+                  </div>
+                </div>
+
+                <div className="phone-control-card">
+                  <div className="phone-control-section-header">
+                    <span className="phone-control-section-title">
+                      <span className="phone-control-section-mark">◆</span>
+                      Set port
+                    </span>
+                    <div className="phone-control-inline-badges">
+                      <span className="phone-control-badge phone-control-badge-muted">
+                        <Shuffle className="phone-control-icon-small" />0
+                      </span>
+                      <span className="phone-control-badge phone-control-badge-active">Active</span>
+                    </div>
+                  </div>
+
+                  <div className="phone-control-input-wrap">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={port}
+                      onChange={(e) => setPort(e.target.value.replace(/[^0-9]/g, ''))}
+                      className="phone-control-input"
+                    />
+                    <button
+                      onClick={() => setPort(String(Math.floor(1024 + Math.random() * 60000)))}
+                      title="Random port"
+                      className="phone-control-random-port"
+                    >
+                      <Shuffle className="phone-control-icon" />
+                    </button>
+                  </div>
+
+                  <div className="phone-control-range-group">
+                    <div className="phone-control-range-label">IP Range</div>
+                    <div className="phone-control-grid-4">
+                      {rangeFrom.map((val, i) => (
+                        <OctetInput
+                          key={`from-${i}`}
+                          value={val}
+                          onChange={(v) => updateOctet(setRangeFrom, rangeFrom, i, v)}
+                        />
+                      ))}
+                    </div>
+                    <div className="phone-control-grid-4">
+                      {rangeTo.map((val, i) => (
+                        <OctetInput
+                          key={`to-${i}`}
+                          value={val}
+                          onChange={(v) => updateOctet(setRangeTo, rangeTo, i, v)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="phone-control-grid-2">
+                    <button
+                      onClick={handleAdd}
+                      className="phone-control-btn phone-control-btn-secondary"
+                    >
+                      <Plus
+                        className="phone-control-icon-small phone-control-icon-accent"
+                        strokeWidth={3}
+                      />
+                      Add
+                    </button>
+                    <button
+                      onClick={() =>
+                        onScanAll?.({ port, from: rangeFrom.join('.'), to: rangeTo.join('.') })
+                      }
+                      className="phone-control-btn phone-control-btn-primary"
+                    >
+                      <RefreshCw className="phone-control-icon-small" />
+                      Scan
+                    </button>
+                  </div>
+                </div>
+
+                <div className="phone-control-saved-wrap">
+                  <div className="phone-control-saved-header">
+                    <span className="phone-control-section-title">
+                      <span className="phone-control-section-mark">◆</span>
+                      Saved networks
+                    </span>
+                    <button
+                      onClick={() => onScanAll?.({ all: true })}
+                      className="phone-control-scan-small"
+                    >
+                      <RefreshCw className="phone-control-icon-small phone-control-icon-accent" />
+                      Scan
+                    </button>
+                  </div>
+
+                  <div className="phone-control-saved-list">
+                    {savedNetworksState.map((net) => (
+                      <div key={net.id} className="phone-control-saved-item">
+                        <div className="phone-control-network-header">
+                          <span className="phone-control-network-id">{net.id}</span>
+                          <button
+                            onClick={() => onScanNetwork?.(net)}
+                            className="phone-control-network-scan"
+                          >
+                            <Search className="phone-control-icon-small" />
+                            Scan
+                          </button>
+                          <button
+                            onClick={() => handleDeleteNetwork(net.id)}
+                            className="phone-control-network-delete"
+                          >
+                            ×
+                          </button>
+                        </div>
+                        <div className="phone-control-network-range">
+                          {net.from} - {net.to}
+                        </div>
+                        <div className="phone-control-network-port">
+                          <span>Port</span>
+                          <span className="phone-control-network-port-value">{net.port}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </aside>
   )
 }

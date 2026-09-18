@@ -31,7 +31,7 @@ export default function DeviceStream({
       {
         status: (text) => setStatus(text),
 
-        log: () => undefined,
+        log: (text) => console.log(`[${device.id}]`, text),
 
         streaming: () => {
           setStatus('Đang phát trực tiếp')

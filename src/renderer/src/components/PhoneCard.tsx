@@ -129,7 +129,7 @@ export default function PhoneCard({
           <div className="phone-card-controlled-icon">
             <Cpu size={20} />
           </div>
-          <div className="phone-card-controlled-title">Device under control</div>
+          <div className="phone-card-controlled-title">◆ CONTROLLED</div>
           <div className="phone-card-controlled-subtitle">{controlledLabel}</div>
         </div>
       ) : (

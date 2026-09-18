@@ -3,7 +3,7 @@ import { useAuth } from '../auth/AuthContext'
 import Header from '../components/Header'
 import Sidebar from '../components/SideNav'
 import Footer from '@renderer/components/Footer'
-import PhoneControl from '../components/PhoneControl'
+import OTGHub from '../components/PhoneControl'
 import SharedConfig from '@renderer/components/SharedConfig'
 import type { SharedPhone } from '../PhoneShared'
 
@@ -14,6 +14,12 @@ interface AppLayoutProps {
   selectedIds: string[]
   onSelectionChange: (ids: string[]) => void
   onSelectedDevice: (deviceId: string) => void
+  remoteInvite: string
+  remoteStatus: string
+  remoteConnected: boolean
+  onRemoteInviteChange: (invite: string) => void
+  onRemoteConnect: () => void
+  onRemoteDisconnect: () => void
   children: React.ReactNode
 }
 
@@ -29,6 +35,12 @@ export default function AppLayout({
   selectedIds,
   onSelectionChange,
   onSelectedDevice,
+  remoteInvite,
+  remoteStatus,
+  remoteConnected,
+  onRemoteInviteChange,
+  onRemoteConnect,
+  onRemoteDisconnect,
   children
 }: AppLayoutProps): React.JSX.Element {
   const { user } = useAuth()
@@ -73,7 +85,16 @@ export default function AppLayout({
         />
         <main className="dashboard-content">{children}</main>
 
-        {selectedId === 'control-center' || selectedId === 'phone-cloud' ? <PhoneControl /> : null}
+        {selectedId === 'control-center' || selectedId === 'phone-cloud' ? (
+          <OTGHub
+            remoteInvite={remoteInvite}
+            remoteStatus={remoteStatus}
+            remoteConnected={remoteConnected}
+            onRemoteInviteChange={onRemoteInviteChange}
+            onRemoteConnect={onRemoteConnect}
+            onRemoteDisconnect={onRemoteDisconnect}
+          />
+        ) : null}
         {/* {selectedId === 'phone-shared' ? (
           <SharedConfig
             selectedIds={selectedIds}

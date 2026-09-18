@@ -4,10 +4,11 @@ import ConfirmEmail from './components/ConfirmEmail'
 import ForgotPassword from './components/ForgotPassword'
 import ResetPassword from './components/ResetPassword'
 import ControlCenter from './ControlCenter'
-import PhoneShared, { type SharedPhone } from './PhoneShared'
+import type { SharedPhone } from './PhoneShared'
 import AppLayout from './layout/AppLayout'
 import { useAuth } from './auth/AuthContext'
-import React, { useState, useCallback } from 'react'
+import { WebRtcClient } from '../../main/web/src/webrtc-client'
+import React, { useState, useCallback, useEffect } from 'react'
 
 function App(): React.JSX.Element {
   const { loading: authLoading, setAuthenticated, signOut } = useAuth()
@@ -19,6 +20,9 @@ function App(): React.JSX.Element {
   const [sharedPhones, setSharedPhones] = useState<SharedPhone[]>([])
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null)
+  const [invite, setInvite] = useState('')
+  const [rtcClient, setRtcClient] = useState<WebRtcClient | null>(null)
+  const [remoteStatus, setRemoteStatus] = useState('')
 
   const handleSelectedDevice = useCallback((deviceId: string): void => {
     setSelectedDeviceId(deviceId || null)
@@ -26,6 +30,61 @@ function App(): React.JSX.Element {
 
     setSelectedIds((previous) => (previous.includes(deviceId) ? previous : [...previous, deviceId]))
   }, [])
+
+  useEffect(() => {
+    if (
+      selectedDeviceId != null &&
+      !sharedPhones.some((phone) => phone.serial === selectedDeviceId)
+    ) {
+      rtcClient?.clearSelection(selectedDeviceId)
+      setSelectedDeviceId(null)
+    }
+  }, [sharedPhones, rtcClient, selectedDeviceId])
+
+  useEffect(() => {
+    return () => {
+      rtcClient?.close()
+      void window.api.remoteShare.stopViewer()
+    }
+  }, [rtcClient])
+
+  const connectSharedPhones = async (): Promise<void> => {
+    try {
+      setRemoteStatus('Connecting to Host...')
+      setSharedPhones([])
+      const connection = await window.api.remoteShare.openViewer(invite.trim())
+      const client = new WebRtcClient(
+        {
+          devices: (serials) => {
+            setSharedPhones(
+              serials.map((serial) => ({ serial, connectionTag: 'WebRTC', isControlled: false }))
+            )
+            setRemoteStatus(`${serials.length} phone${serials.length === 1 ? '' : 's'} connected`)
+          },
+          status: setRemoteStatus,
+          log: (text) => window.api.remoteShare.writeLog(text)
+        },
+        {
+          url: connection.rendezvousUrl,
+          sessionId: connection.sessionId,
+          sessionSecret: connection.secret
+        }
+      )
+      setRtcClient(client)
+      client.connect()
+    } catch (error) {
+      setRemoteStatus(error instanceof Error ? error.message : 'Could not connect to Host')
+    }
+  }
+
+  const disconnectSharedPhones = async (): Promise<void> => {
+    rtcClient?.close()
+    setRtcClient(null)
+    setSharedPhones([])
+    setSelectedDeviceId(null)
+    await window.api.remoteShare.stopViewer()
+    setRemoteStatus('Disconnected from Host')
+  }
 
   const handleAuthenticated = useCallback(
     (user: unknown) => {
@@ -87,17 +146,28 @@ function App(): React.JSX.Element {
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
         onSelectedDevice={handleSelectedDevice}
+        remoteInvite={invite}
+        remoteStatus={remoteStatus}
+        remoteConnected={rtcClient !== null}
+        onRemoteInviteChange={setInvite}
+        onRemoteConnect={() => void connectSharedPhones()}
+        onRemoteDisconnect={() => void disconnectSharedPhones()}
       >
-        {activeId === 'phone-shared' ? (
-          <PhoneShared
-            phones={sharedPhones}
-            onPhonesChange={setSharedPhones}
-            selectedDeviceId={selectedDeviceId}
-            onSelectedDevice={handleSelectedDevice}
-          />
-        ) : (
-          <ControlCenter />
-        )}
+        <ControlCenter
+          phones={sharedPhones}
+          remoteClient={rtcClient}
+          status={remoteStatus}
+          selectedDeviceId={selectedDeviceId}
+          onSelectDevice={(deviceId) => {
+            handleSelectedDevice(deviceId)
+            rtcClient?.selectDevice(deviceId)
+          }}
+          onCloseFocused={() => {
+            if (selectedDeviceId) rtcClient?.clearSelection(selectedDeviceId)
+            handleSelectedDevice('')
+          }}
+          onDisconnect={() => void disconnectSharedPhones()}
+        />
       </AppLayout>
     )
   }

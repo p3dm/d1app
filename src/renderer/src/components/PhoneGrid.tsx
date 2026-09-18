@@ -2,11 +2,13 @@ import { type JSX } from 'react'
 import PhoneCard from './PhoneCard'
 import type { WebRtcClient } from '../../../main/web/src/webrtc-client'
 import DeviceStream from './DeviceStream'
+import { Cpu } from 'lucide-react'
 
 export interface PhoneGridDevice {
   id: string
   model?: string
   ip?: string
+  system?: string
   connectionTag?: string
   apps?: string[]
   isControlled?: boolean
@@ -35,8 +37,8 @@ export function WebRtcDeviceTile({
   selected = false
 }: WebRtcDeviceTileProps): JSX.Element {
   return (
-    <article
-      className={`webrtc-device-tile${selected ? ' webrtc-device-tile-selected' : ''}`}
+    <div
+      className="phone-card"
       onDoubleClick={() => onSelect?.(device)}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -49,24 +51,37 @@ export function WebRtcDeviceTile({
       aria-pressed={selected}
       aria-label={`Focus ${device.model ?? device.id}`}
     >
-      <div className="webrtc-device-tile-header">
-        <strong>{device.model ?? device.id}</strong>
+      <div className={`webrtc-device-info${selected ? ' webrtc-device-phone-selected' : ''}`}>
+        {selected ? (
+          <div className="phone-card-controlled-body">
+            <div className="phone-card-controlled-icon">
+              <Cpu size={20} />
+            </div>
+            <div className="phone-card-controlled-title">◆ CONTROLLED</div>
+            <div className="phone-card-controlled-subtitle">Master mirror active</div>
+          </div>
+        ) : (
+          <DeviceStream device={device} remoteClient={remoteClient} />
+        )}
 
-        <span>{device.connectionTag ?? 'WebRTC'}</span>
-      </div>
+        <div className="webrtc-device-info" aria-label={`Device information for ${device.id}`}>
+          <div className="phone-card-tag-row">
+            <span className={`phone-card-tag${selected ? ' phone-card-tag-controlled' : ''}`}>
+              <span className="phone-card-tag-dot" />
+              {device.connectionTag}
+            </span>
+          </div>
 
-      {selected ? (
-        <div className="webrtc-device-selected-state">
-          <span aria-hidden="true">★</span>
-          <strong>CONTROLLED</strong>
-          <small>Master mirror active</small>
+          <div className="phone-card-info">
+            <div className="phone-card-id">{device.system}</div>
+            <div className={`phone-card-model${selected ? ' phone-card-model-controlled' : ''}`}>
+              {device.model}
+            </div>
+            <div className="phone-card-ip">{device.ip}</div>
+          </div>
         </div>
-      ) : (
-        <DeviceStream device={device} remoteClient={remoteClient} />
-      )}
-
-      <small>{device.ip ?? device.id}</small>
-    </article>
+      </div>
+    </div>
   )
 }
 
